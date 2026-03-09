@@ -6,13 +6,13 @@ import loginLogo from "../../assets/imagesource/login_logo.png";
 import { Label, TextInput } from 'flowbite-react';
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
-import { login } from '../Reducer/AuthSlice';
+import { login, registration } from '../Reducer/AuthSlice';
 import { useState } from 'react';
 import Link from 'next/link';
 
 export default function Login() {
   const router = useRouter();
-  
+  const[userId,setUserId]=useState()
   const dispatch=useDispatch()
     const {
     register,
@@ -22,16 +22,17 @@ export default function Login() {
   } = useForm();
 
   const onSubmit=(data)=>{
-    dispatch(login(data)).then((res)=>{
-    
+    dispatch(registration(data)).then((res)=>{
+      console.log("res",res);
       
-      if(res?.payload?.statusCode===200){
-    const userId = res?.payload?.id.toString(); // Ensure it's a string
+      if(res?.payload?.statusCode===200||res?.payload?.statusCode===201){
+    // const userId = res?.payload?.id.toString(); // Ensure it's a string
       
-      // Encode the ID to Base64
-      const encodedId = btoa(userId); 
+    //   // Encode the ID to Base64
+    //   const encodedId = btoa(userId); 
       
-      router.push(`/verify?id=${encodedId}`);
+    //   router.push(`/verify?id=${encodedId}`);
+    router.push("/dashboard");
       }
     })
   }
@@ -54,6 +55,21 @@ export default function Login() {
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)}>
+        <Label>Name</Label>
+        <div className="w-full max-w-[440px] mb-6">
+         
+          <TextInput
+          type='text'
+          className="border border-[#761ed3] rounded-[10px] mt-2"
+          {...register("name",{required:"Name is required"})}
+          />
+         
+       {
+        errors?.name&&(
+          <span className='text-red-500'>{ errors?.name?.message}</span>
+        )
+       }
+        </div>
         <Label>Email</Label>
         <div className="w-full max-w-[440px] mb-6">
          
@@ -80,6 +96,20 @@ export default function Login() {
           {
             errors?.password&&(
               <span className='text-red-500'>{errors?.password?.message}</span>
+            )
+          }
+         </div>
+            <Label>Mobile</Label>
+         <div className="w-full max-w-[440px] mb-6">
+            <TextInput
+          type='text'
+          className="border border-[#761ed3] rounded-[10px]"
+          placeholder=''
+          {...register("mobile",{required:"Mobile Number is required"})}
+          />
+          {
+            errors?.mobile&&(
+              <span className='text-red-500'>{errors?.mobile?.message}</span>
             )
           }
          </div>
@@ -116,7 +146,7 @@ export default function Login() {
             Continue with Google
           </span>
         </button>
-         <div className='text-center mt-2'>Don't have account? <span className='text-blue-500'><Link href="/signup">signup</Link></span> </div>
+        <div className='text-center mt-2'>already have an account? <span className='text-blue-500'><Link href="/login">signin</Link></span> </div>
       </div>
     </div>
   );

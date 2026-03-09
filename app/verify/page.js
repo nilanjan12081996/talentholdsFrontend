@@ -1,14 +1,36 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 import Image from "next/image";
 import loginLogo from "../../assets/imagesource/login_logo.png";
+import { verifyOtp } from '../Reducer/AuthSlice';
+import { useDispatch, useSelector } from 'react-redux';
 
 export default function Verify() {
+  const searchParams = useSearchParams();
+  const [userId, setUserId] = useState(null);
+  const{otpData}=useSelector((state)=>state?.auth)
   const router = useRouter();
+  const dispatch=useDispatch()
   const [code, setCode] = useState(['', '', '', '', '', '']);
+
+
+  useEffect(() => {
+    const encodedId = searchParams.get('id');
+    if (encodedId) {
+      try {
+        // Decode the Base64 string back to the original ID
+        const decodedId = atob(encodedId);
+        setUserId(decodedId);
+      } catch (e) {
+        console.error("Invalid encoded ID", e);
+        // Handle error (e.g., redirect back to login)
+      }
+    }
+  }, [searchParams]);
+
 
   const handleInputChange = (value, index) => {
     if (!/^\d*$/.test(value)) return;
@@ -28,9 +50,37 @@ export default function Verify() {
     }
   };
 
+  // const handleSubmit = () => {
+  //   router.push('/dashboard');
+  // };
+
   const handleSubmit = () => {
-    router.push('/dashboard');
+    // 1. Join the array of digits into a single string (e.g., "123456")
+    const otpString = code.join('');
+
+    // 2. Validate that we have both the ID and the full OTP
+    if (!userId || otpString.length < 6) {
+      alert("Please enter the full 6-digit code.");
+      return;
+    }
+
+    // 3. Prepare the payload
+    const payload = {
+      id: Number(userId), // Convert back to number if your API expects an integer
+      otp: otpString
+    };
+
+    // 4. Dispatch the Thunk
+    dispatch(verifyOtp(payload)).then((res) => {
+      if (res?.payload?.statusCode === 200) {
+        router.push('/dashboard');
+      } else {
+        // Handle error (e.g., show a toast or error message)
+        console.error("Verification failed", res.payload);
+      }
+    });
   };
+console.log("otpData",otpData);
 
   return (
     <div className="min-h-screen bg-[#faf4fe] flex items-center justify-center p-4 font-sans">

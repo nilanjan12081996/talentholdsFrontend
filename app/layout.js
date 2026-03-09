@@ -9,6 +9,7 @@ import ClientLayoutWrapper from "./clientLayoutWrapper";
 import { ThemeProvider } from "./context/ThemeContext";
 
 
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"], // choose what you need
@@ -58,11 +59,13 @@ export default function RootLayout({ children }) {
       <body
         className={`${poppins.variable} ${bricolage.variable} antialiased`}
       >
+        <Providers>
         <ThemeProvider>
           <ClientLayoutWrapper>
             {children}
           </ClientLayoutWrapper>
         </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
