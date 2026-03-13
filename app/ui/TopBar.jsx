@@ -7,12 +7,16 @@ import Image from 'next/image';
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowUpCircle, Check, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
+import { workspaceList } from '../Reducer/AuthSlice';
 
 export default function TopBar({ onMenuClick }) {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
     const { isDark, toggleTheme } = useTheme();
+    const {workspaceData}=useSelector((state)=>state?.auth)
+    const dispatch=useDispatch()
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -25,6 +29,12 @@ export default function TopBar({ onMenuClick }) {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [dropdownRef]);
+
+    useEffect(()=>{
+        dispatch(workspaceList())
+    },[])
+console.log("workspaceData",workspaceData);
+
 
     return (
         <div className="bg-white rounded-full p-2 pl-6 pr-2 shadow-sm flex items-center justify-between gap-4 h-[60px] w-full md:w-auto transition-all">
@@ -95,19 +105,29 @@ export default function TopBar({ onMenuClick }) {
                         <p className="text-xs font-semibold text-gray-400 mb-2 px-1">Workspace</p>
 
                         {/* Active Workspace */}
-                        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 cursor-pointer mb-4">
+                        {
+                            workspaceData?.data?.map((work)=>{
+                                return(
+                                    <>
+                                        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 cursor-pointer mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="h-8 w-8 bg-[#7B6341] rounded flex items-center justify-center text-white text-sm">
                                     I
                                 </div>
-                                <span className="font-bold text-gray-800 text-sm">Iksen</span>
+                                <span className="font-bold text-gray-800 text-sm">{work?.name}</span>
                             </div>
                             <Check size={16} className="text-gray-800" strokeWidth={3} />
                         </div>
+                                    </>
+                                )
+                            })
+                        }
+                    
+                      
 
                         {/* Add Workspace */}
                         <button
-                            onClick={() => router.push('/create-workspace')}
+                            onClick={() => router.push('/workspace')}
                             className="cursor-pointer w-full bg-[#F5F0FF] hover:bg-[#ede5ff] text-[#8B5CF6] rounded-lg py-2.5 flex items-center justify-center gap-2 text-sm font-medium transition-colors"
                         >
                             <Plus size={18} />

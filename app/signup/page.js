@@ -5,12 +5,13 @@ import Image from "next/image";
 import loginLogo from "../../assets/imagesource/login_logo.png";
 import { Label, TextInput } from 'flowbite-react';
 import { useForm } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
-import { login, registration } from '../Reducer/AuthSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { login, registration, workspaceList } from '../Reducer/AuthSlice';
 import { useState } from 'react';
 import Link from 'next/link';
 
 export default function Login() {
+  const{workspaceData}=useSelector((state)=>state?.auth)
   const router = useRouter();
   const[userId,setUserId]=useState()
   const dispatch=useDispatch()
@@ -32,10 +33,21 @@ export default function Login() {
     //   const encodedId = btoa(userId); 
       
     //   router.push(`/verify?id=${encodedId}`);
-    router.push("/dashboard");
+   // router.push("/dashboard");
+   dispatch(workspaceList()).then((res)=>{
+    console.log("res",res);
+    if(res?.payload?.data.length<=0){
+       router.push('/workspace');
+    }
+    else{
+      router.push('/dashboard');
+    }
+    
+   })
       }
     })
   }
+console.log("workspaceList",workspaceData);
 
   return (
     <div className="min-h-screen bg-[#faf4fe] flex items-center justify-center p-4 font-sans">
@@ -122,7 +134,7 @@ export default function Login() {
           className="w-full max-w-[440px] h-[70px] bg-[#761ed3] text-white rounded-[8px] text-[18px] font-medium hover:bg-[#6016ab] transition-colors mb-8 flex items-center justify-center gap-2"
         >
           {/* Continue with email */}
-          Login
+          Register
         </button>
           </form>
         {/* Divider */}

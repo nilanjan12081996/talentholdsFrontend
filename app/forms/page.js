@@ -2,6 +2,10 @@
 
 import { Plus, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { workspaceList } from '../Reducer/AuthSlice';
+import WorkspaceModal from './WorkspaceModal';
 
 const forms = [
   { id: 1, title: 'Senior Developer Application', role: 'Senior Developer', type: 'Job Application', status: 'Published', responses: 45, fields: 12, modified: '1/20/2026' },
@@ -17,7 +21,22 @@ const forms = [
 
 export default function Forms() {
   const router = useRouter();
+  const[openworkspaceModal,setWorkspaceModal]=useState(false)
+  const {workspaceData}=useSelector((state)=>state?.auth)
+  const dispatch=useDispatch()
+  useEffect(()=>{
+    dispatch(workspaceList())
+  },[])
 
+  const handleAddForm=()=>{
+  setWorkspaceModal(true)
+  }
+const handleSelectWorkspace = (workspaceId) => {
+    console.log("Selected workspace:", workspaceId);
+    setWorkspaceModal(false); // Close the modal
+    router.push(`/forms/builder?workspaceId=${workspaceId}`);
+    
+  };
   return (
     <div className="space-y-8 rounded-[20px] p-4" style={{ background: 'var(--bg-card)' }}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -32,7 +51,8 @@ export default function Forms() {
             <span className="cursor-pointer hover:text-[#8624F0] transition-colors">Job Applications (11)</span>
           </div>
           <button
-            onClick={() => router.push('/forms/builder')}
+          //  onClick={() => router.push('/forms/builder')}
+          onClick={handleAddForm}
             className="bg-[#8624F0] text-white px-6 py-3 rounded-[10px] font-bold flex items-center gap-2 hover:bg-[#6c1dc0] transition-colors whitespace-nowrap ml-auto"
           >
             <Plus size={18} /> Create New Form
@@ -86,6 +106,19 @@ export default function Forms() {
           </div>
         ))}
       </div>
+      {
+        openworkspaceModal&&(
+          <>
+          <WorkspaceModal 
+        isOpen={openworkspaceModal} 
+        onClose={() => setWorkspaceModal(false)} 
+        workspaces={workspaceData?.data}
+        onSelect={handleSelectWorkspace}
+      />
+          </>
+        )
+      }
+      
     </div>
   );
 }

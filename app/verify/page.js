@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 import Image from "next/image";
 import loginLogo from "../../assets/imagesource/login_logo.png";
-import { verifyOtp } from '../Reducer/AuthSlice';
+import { verifyOtp, workspaceList } from '../Reducer/AuthSlice';
 import { useDispatch, useSelector } from 'react-redux';
 
 export default function Verify() {
@@ -73,7 +73,17 @@ export default function Verify() {
     // 4. Dispatch the Thunk
     dispatch(verifyOtp(payload)).then((res) => {
       if (res?.payload?.statusCode === 200) {
-        router.push('/dashboard');
+        //router.push('/dashboard');
+         dispatch(workspaceList()).then((res)=>{
+            console.log("res",res);
+            if(res?.payload?.data?.length<=0){
+              router.push('/workspace');
+            }
+            else{
+              router.push('/dashboard');
+            }
+            
+           })
       } else {
         // Handle error (e.g., show a toast or error message)
         console.error("Verification failed", res.payload);

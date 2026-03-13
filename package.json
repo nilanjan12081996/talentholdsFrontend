@@ -16,6 +16,7 @@
     "lucide-react": "^0.574.0",
     "motion": "^12.34.3",
     "next": "16.0.8",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-hook-form": "^7.70.0",

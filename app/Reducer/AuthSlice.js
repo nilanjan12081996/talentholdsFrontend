@@ -54,6 +54,42 @@ export const registration = createAsyncThunk(
         }
     }
 )
+
+export const workspaceList = createAsyncThunk(
+    'auth/workspaceList',
+    async (userInput, { rejectWithValue }) => {
+
+        try {
+            const response = await api.get('/workspace', userInput);
+            if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            // let errors = errorHandler(err);
+            return rejectWithValue(err);
+        }
+    }
+)
+
+export const createWorkspace = createAsyncThunk(
+    'auth/createWorkspace',
+    async (userInput, { rejectWithValue }) => {
+
+        try {
+            const response = await api.post('/workspace/create', userInput);
+            if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            // let errors = errorHandler(err);
+            return rejectWithValue(err);
+        }
+    }
+)
 const initialState = {
     message: null,
     error: null,
@@ -63,7 +99,9 @@ const initialState = {
     subdomain: [],
     loadingLogin: false,
     otpData:"",
-    registerData:""
+    registerData:"",
+    workspaceData:[],
+    createWorkspaceData:""
 }
 const AuthSlice = createSlice(
     {
@@ -163,6 +201,32 @@ const AuthSlice = createSlice(
                     sessionStorage.setItem("talent_hold_token",JSON.stringify({token:payload?.token}))
                 })
                 .addCase(registration.rejected,(state,{payload})=>{
+                    state.loading=false
+                    state.error=payload
+                })
+                  .addCase(workspaceList.pending,(state)=>{
+                    state.loading=true
+                })
+                .addCase(workspaceList.fulfilled,(state,{payload})=>{
+                    state.loading=false
+                    state.workspaceData=payload
+                    state.error=false
+                    
+                })
+                .addCase(workspaceList.rejected,(state,{payload})=>{
+                    state.loading=false
+                    state.error=payload
+                })
+                 .addCase(createWorkspace.pending,(state)=>{
+                    state.loading=true
+                })
+                .addCase(createWorkspace.fulfilled,(state,{payload})=>{
+                    state.loading=false
+                    state.createWorkspaceData=payload
+                    state.error=false
+                    
+                })
+                .addCase(createWorkspace.rejected,(state,{payload})=>{
                     state.loading=false
                     state.error=payload
                 })

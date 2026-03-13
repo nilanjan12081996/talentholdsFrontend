@@ -9,11 +9,42 @@ import {
 import FieldBlocks from "../../ui/form-builder/FieldBlocks"
 import FieldSettings from "../../ui/form-builder/FieldSettings";
 import ShareModal from "../../ui/form-builder/ShareModal";
+import { useSearchParams } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import {createForm} from "../../Reducer/FormbuilderSlice"
 
 export default function FormBuilderPage() {
     const [formTitle, setFormTitle] = useState("Untitled Form");
     const [formDescription, setFormDescription] = useState("");
-    const [fields, setFields] = useState([]);
+    const[formLink,setFormLink]=useState()
+    const searchParams = useSearchParams();
+    const workspaceId = searchParams.get('workspaceId');
+    const dispatch = useDispatch();
+    // We need formTypeData to get the exact ID for each field type before sending to API
+    const { formTypeData } = useSelector((state) => state?.formBuilder || {});
+    
+    // 1. INITIALIZE STATE WITH DEFAULT FIELDS
+    const [fields, setFields] = useState([
+        {
+            id: `field-default-name`, 
+            type: "short-text",
+            label: "Full Name", 
+            placeholder: "Enter your full name",
+            required: true, 
+            description: "",
+            isDeletable: false // This prevents deletion
+        },
+        {
+            id: `field-default-email`, 
+            type: "email",
+            label: "Email Address", 
+            placeholder: "Enter your email address",
+            required: true, 
+            description: "",
+            isDeletable: false // This prevents deletion
+        }
+    ]);
+    
     const [selectedFieldId, setSelectedFieldId] = useState(null);
     const [showShareModal, setShowShareModal] = useState(false);
     const [isPublished, setIsPublished] = useState(false);
@@ -39,6 +70,7 @@ export default function FormBuilderPage() {
             label: getDefaultLabel(type), placeholder: "",
             required: false, description: "",
             options: ["multiple-choice", "checkbox", "dropdown"].includes(type) ? ["Option 1", "Option 2"] : undefined,
+            isDeletable: true // 2. NEW FIELDS CAN BE DELETED
         };
         setFields([...fields, newField]);
         setSelectedFieldId(newField.id);
@@ -60,15 +92,89 @@ export default function FormBuilderPage() {
         setFields(updated);
     };
 
-    const handlePublish = () => {
-        setIsPublished(true);
-        setShowShareModal(true);
+    const handlePublish = async() => {
+        // setIsPublished(true);
+        // setShowShareModal(true);
+        if (!workspaceId) {
+            alert("No workspace selected. Please go back and select a workspace.");
+            return;
+        }
+        const apiFieldTypes = Array.isArray(formTypeData) ? formTypeData : [];
+        const reverseTypeMap = {
+            "short-text": "SHORT_TEXT",
+            "long-text": "LONG_TEXT",
+            "email": "EMAIL",
+            "phone": "PHONE",
+            "number": "NUMBER",
+            "dropdown": "SELECT",       
+            "multiple-choice": "RADIO", 
+            "checkbox": "CHECKBOX",
+            "date": "DATE",
+            "file-upload": "FILE",      
+            "multi-select": "MULTI_SELECT",
+            "video": "VIDEO"
+        };
+        const formattedFields = fields.map(field => {
+            // 1. Get the API CODE string (e.g., "SHORT_TEXT")
+            const apiCode = reverseTypeMap[field.type] || field.type.toUpperCase();
+            
+            // 2. Find the numerical ID from the formTypeData fetched from Redux
+            const apiFieldObj = apiFieldTypes.find(t => t.code === apiCode);
+            const fieldTypeId = apiFieldObj ? apiFieldObj.id : 1; // Fallback to 1 if not found
+
+            // 3. Build the base field object
+            const payloadField = {
+                label: field.label,
+                placeholder: field.placeholder || "",
+                isRequired: field.required === true, // Ensure boolean
+                fieldTypeId: fieldTypeId
+            };
+
+            // 4. If it has options, format them to match API
+            if (field.options && field.options.length > 0) {
+                payloadField.options = field.options.map(opt => ({
+                    optionLabel: opt
+                }));
+            }
+
+            return payloadField;
+        });
+
+        // Assemble the final payload
+        const payload = {
+            title: formTitle,
+            description: formDescription,
+            workspaceId: parseInt(workspaceId, 10), // Ensure it's a number
+            fields: formattedFields
+        };
+
+        console.log("Submitting Payload:", payload);
+
+        try {
+            // Dispatch the thunk
+            const resultAction = await dispatch(createForm(payload));
+            
+            if (createForm.fulfilled.match(resultAction)) {
+                const generatedLink = resultAction.payload?.link;
+                
+                // 2. SAVE IT TO STATE
+                setFormLink(generatedLink);
+                setIsPublished(true);
+                setShowShareModal(true);
+                // Note: resultAction.payload usually contains the newly created form ID from backend
+            } else {
+                alert("Failed to create form: " + (resultAction.payload?.message || "Unknown error"));
+            }
+        } catch (error) {
+            console.error("Error creating form:", error);
+            alert("An error occurred while publishing.");
+        }
     };
 
     return (
         <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'var(--bg-main)' }}>
 
-            {/* Top Bar */}
+            {/* Top Bar (Unchanged) */}
             <div
                 className="px-6 py-4 flex items-center justify-between shrink-0"
                 style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border-color)' }}
@@ -151,14 +257,9 @@ export default function FormBuilderPage() {
 
                             {/* Fields */}
                             {fields.length === 0 ? (
-                                <div
-                                    className="text-center py-12 border-2 border-dashed rounded-[16px]"
-                                    style={{ borderColor: 'var(--border-color)' }}
-                                >
-                                    <div
-                                        className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center"
-                                        style={{ background: 'var(--bg-main)' }}
-                                    >
+                                // ... (Empty state logic unchanged) ...
+                                <div className="text-center py-12 border-2 border-dashed rounded-[16px]" style={{ borderColor: 'var(--border-color)' }}>
+                                    <div className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'var(--bg-main)' }}>
                                         <Plus className="w-6 h-6" style={{ color: 'var(--text-secondary)' }} />
                                     </div>
                                     <p className="mb-1" style={{ color: 'var(--text-secondary)' }}>No fields yet</p>
@@ -205,7 +306,8 @@ export default function FormBuilderPage() {
             </div>
 
             <ShareModal
-                formId="new"
+               
+                formLink={formLink}
                 isOpen={showShareModal}
                 onClose={() => setShowShareModal(false)}
             />
@@ -250,12 +352,16 @@ function DraggableField({ field, index, isSelected, onSelect, onDelete, onMove }
                             <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{field.description}</p>
                         )}
                     </div>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-                    >
-                        <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
-                    </button>
+                    
+                    {/* 3. ONLY SHOW TRASH CAN IF isDeletable IS NOT FALSE */}
+                    {field.isDeletable !== false && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                        </button>
+                    )}
                 </div>
                 <FieldPreview field={field} />
             </div>
@@ -263,7 +369,7 @@ function DraggableField({ field, index, isSelected, onSelect, onDelete, onMove }
     );
 }
 
-// ─── Field Preview ────────────────────────────────────────────────
+// ─── Field Preview (Unchanged) ────────────────────────────────────────────────
 function FieldPreview({ field }) {
     const inputStyle = {
         background: 'var(--bg-main)',
