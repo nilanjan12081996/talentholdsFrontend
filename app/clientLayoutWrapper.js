@@ -64,6 +64,16 @@ export default function ClientLayoutWrapper({ children }) {
   // Avoid flash of wrong layout before hydration
   if (!hydrated) return null;
 
+  if (isPublicFormRoute) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 py-12">
+        <div className="w-full flex justify-center">
+            {children}
+        </div>
+      </div>
+    );
+  }
+
   // 1. No layout at all — login, signup, forgot-password, builder, etc.
   if (isNoLayoutRoute) {
     return <>{children}</>;
