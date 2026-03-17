@@ -151,6 +151,24 @@ export const uploadVideoForm = createAsyncThunk(
 );
 
 
+export const allFormList = createAsyncThunk(
+    'auth/allFormList',
+    async ({id}, { rejectWithValue }) => {
+
+        try {
+            const response = await api.get(`/form/get?workspaceid=${id}`);
+            if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            // let errors = errorHandler(err);
+            return rejectWithValue(err);
+        }
+    }
+)
+
 const initialState={
 loading:false,
 formTypeData:[],
@@ -159,7 +177,8 @@ createFormData:"",
 currentForm:null,
 formsubmitData:"",
 fileuploadData:"",
-videoUploadData:""
+videoUploadData:"",
+allforms:[]
 }
 const FormbuilderSlice=createSlice(
     {
@@ -245,6 +264,19 @@ const FormbuilderSlice=createSlice(
 
         })
         .addCase(uploadVideoForm.rejected,(state,{payload})=>{
+            state.loading=false
+            state.error=payload
+        })
+              .addCase(allFormList.pending,(state)=>{
+            state.loading=true
+        })
+        .addCase(allFormList.fulfilled,(state,{payload})=>{
+            state.loading=false
+            state.allforms=payload
+            state.error=false
+
+        })
+        .addCase(allFormList.rejected,(state,{payload})=>{
             state.loading=false
             state.error=payload
         })
