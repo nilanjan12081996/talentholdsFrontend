@@ -1,31 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "./api";
 
-export const getCandidateByWorkspace=createAsyncThunk(
-    'getCandidateByWorkspace',
-     async (userInput, { rejectWithValue }) => {
-
-        try {
-            const response = await api.post(`/candidate/workspace/candidate`,userInput);
-            if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
-                return response.data;
-            } else {
-                return rejectWithValue(response.data);
-            }
-        } catch (err) {
-            // let errors = errorHandler(err);
-            return rejectWithValue(err);
-        }
-    }
-)
-
-
 // export const getCandidateByWorkspace=createAsyncThunk(
 //     'getCandidateByWorkspace',
-//      async ({id}, { rejectWithValue }) => {
+//      async (userInput, { rejectWithValue }) => {
 
 //         try {
-//             const response = await api.get(`/candidate/workspace/get/workspace/candidate/${id}`);
+//             const response = await api.post(`/candidate/workspace/candidate`,userInput);
 //             if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
 //                 return response.data;
 //             } else {
@@ -37,6 +18,25 @@ export const getCandidateByWorkspace=createAsyncThunk(
 //         }
 //     }
 // )
+
+
+export const getCandidateByWorkspace=createAsyncThunk(
+    'getCandidateByWorkspace',
+     async ({id}, { rejectWithValue }) => {
+
+        try {
+            const response = await api.get(`/candidate/workspace/get/workspace/candidate/${id}`);
+            if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            // let errors = errorHandler(err);
+            return rejectWithValue(err);
+        }
+    }
+)
 
 export const fisrtMessgaeSend=createAsyncThunk(
     'fisrtMessgaeSend',
