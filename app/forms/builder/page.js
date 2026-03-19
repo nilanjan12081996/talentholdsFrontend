@@ -1,53 +1,111 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
     ArrowLeft, Eye, Settings as SettingsIcon,
-    Share2, GripVertical, Trash2, Plus,
+    Share2, GripVertical, Trash2, Plus, Loader2,
 } from "lucide-react";
 import FieldBlocks from "../../ui/form-builder/FieldBlocks"
 import FieldSettings from "../../ui/form-builder/FieldSettings";
 import ShareModal from "../../ui/form-builder/ShareModal";
 import { useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import {createForm} from "../../Reducer/FormbuilderSlice"
+import { createForm, getFormById, updateForm } from "../../Reducer/FormbuilderSlice"
+
+// Maps API field type codes back to UI type strings
+const apiCodeToUiType = {
+    "SHORT_TEXT": "short-text",
+    "LONG_TEXT": "long-text",
+    "EMAIL": "email",
+    "PHONE": "phone",
+    "NUMBER": "number",
+    "SELECT": "dropdown",
+    "RADIO": "multiple-choice",
+    "CHECKBOX": "checkbox",
+    "DATE": "date",
+    "FILE": "file-upload",
+    "MULTI_SELECT": "multi-select",
+    "VIDEO": "video",
+};
 
 export default function FormBuilderPage() {
-    const [formTitle, setFormTitle] = useState("Untitled Form");
-    const [formDescription, setFormDescription] = useState("");
-    const[formLink,setFormLink]=useState()
     const searchParams = useSearchParams();
     const workspaceId = searchParams.get('workspaceId');
+    const formId = searchParams.get('formId'); // present when editing
+    const isEditMode = !!formId;
+
     const dispatch = useDispatch();
-    // We need formTypeData to get the exact ID for each field type before sending to API
-    const { formTypeData } = useSelector((state) => state?.formBuilder || {});
-    
-    // 1. INITIALIZE STATE WITH DEFAULT FIELDS
-    const [fields, setFields] = useState([
+    const { formTypeData, editFormData, loading } = useSelector((state) => state?.formBuilder || {});
+
+    const [formTitle, setFormTitle] = useState("Untitled Form");
+    const [formDescription, setFormDescription] = useState("");
+    const [formLink, setFormLink] = useState();
+    const [isPublished, setIsPublished] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [selectedFieldId, setSelectedFieldId] = useState(null);
+    const [isLoadingForm, setIsLoadingForm] = useState(false);
+
+    const DEFAULT_FIELDS = [
         {
-            id: `field-default-name`, 
+            id: `field-default-name`,
             type: "short-text",
-            label: "Full Name", 
+            label: "Full Name",
             placeholder: "Enter your full name",
-            required: true, 
+            required: true,
             description: "",
-            isDeletable: false // This prevents deletion
+            isDeletable: false,
         },
         {
-            id: `field-default-email`, 
+            id: `field-default-email`,
             type: "email",
-            label: "Email Address", 
+            label: "Email Address",
             placeholder: "Enter your email address",
-            required: true, 
+            required: true,
             description: "",
-            isDeletable: false // This prevents deletion
+            isDeletable: false,
+        },
+    ];
+
+    const [fields, setFields] = useState(DEFAULT_FIELDS);
+
+    // ── Fetch existing form when in edit mode ──────────────────────────────────
+    useEffect(() => {
+        if (isEditMode && formId) {
+            setIsLoadingForm(true);
+            dispatch(getFormById(formId)).finally(() => setIsLoadingForm(false));
         }
-    ]);
-    
-    const [selectedFieldId, setSelectedFieldId] = useState(null);
-    const [showShareModal, setShowShareModal] = useState(false);
-    const [isPublished, setIsPublished] = useState(false);
+    }, [formId, isEditMode, dispatch]);
+
+    // ── Pre-populate state once editFormData arrives ───────────────────────────
+    useEffect(() => {
+        if (!isEditMode || !editFormData) return;
+
+        setFormTitle(editFormData.title || "Untitled Form");
+        setFormDescription(editFormData.description || "");
+
+        if (Array.isArray(editFormData.fields) && editFormData.fields.length > 0) {
+            const mappedFields = editFormData.fields.map((f, idx) => {
+                // Try to derive the UI type from the field type code
+                const uiType = apiCodeToUiType[f.fieldType?.code] || "short-text";
+                const isDefault = f.label === "Full Name" || f.label === "Email Address";
+                return {
+                    id: f.id ? `field-api-${f.id}` : `field-idx-${idx}`,
+                    _apiId: f.id,           // keep original DB id for update payload
+                    type: uiType,
+                    label: f.label || "",
+                    placeholder: f.placeholder || "",
+                    required: f.isRequired ?? false,
+                    description: f.description || "",
+                    options: Array.isArray(f.options)
+                        ? f.options.map((o) => o.optionLabel ?? o)
+                        : undefined,
+                    isDeletable: !isDefault,
+                };
+            });
+            setFields(mappedFields);
+        }
+    }, [editFormData, isEditMode]);
 
     const selectedField = fields.find((f) => f.id === selectedFieldId);
 
@@ -93,8 +151,6 @@ export default function FormBuilderPage() {
     };
 
     const handlePublish = async() => {
-        // setIsPublished(true);
-        // setShowShareModal(true);
         if (!workspaceId) {
             alert("No workspace selected. Please go back and select a workspace.");
             return;
@@ -106,18 +162,19 @@ export default function FormBuilderPage() {
             "email": "EMAIL",
             "phone": "PHONE",
             "number": "NUMBER",
-            "dropdown": "SELECT",       
-            "multiple-choice": "RADIO", 
+            "dropdown": "SELECT",
+            "multiple-choice": "RADIO",
             "checkbox": "CHECKBOX",
             "date": "DATE",
-            "file-upload": "FILE",      
+            "file-upload": "FILE",
             "multi-select": "MULTI_SELECT",
             "video": "VIDEO"
         };
+
         const formattedFields = fields.map(field => {
             // 1. Get the API CODE string (e.g., "SHORT_TEXT")
             const apiCode = reverseTypeMap[field.type] || field.type.toUpperCase();
-            
+
             // 2. Find the numerical ID from the formTypeData fetched from Redux
             const apiFieldObj = apiFieldTypes.find(t => t.code === apiCode);
             const fieldTypeId = apiFieldObj ? apiFieldObj.id : 1; // Fallback to 1 if not found
@@ -126,11 +183,16 @@ export default function FormBuilderPage() {
             const payloadField = {
                 label: field.label,
                 placeholder: field.placeholder || "",
-                isRequired: field.required === true, // Ensure boolean
+                isRequired: field.required === true,
                 fieldTypeId: fieldTypeId
             };
 
-            // 4. If it has options, format them to match API
+            // 4. For update: include the field id if it came from the API
+            if (isEditMode && field._apiId) {
+                payloadField.id = field._apiId;
+            }
+
+            // 5. If it has options, format them to match API
             if (field.options && field.options.length > 0) {
                 payloadField.options = field.options.map(opt => ({
                     optionLabel: opt
@@ -144,37 +206,57 @@ export default function FormBuilderPage() {
         const payload = {
             title: formTitle,
             description: formDescription,
-            workspaceId: parseInt(workspaceId, 10), // Ensure it's a number
+            workspaceId: parseInt(workspaceId, 10),
             fields: formattedFields
         };
 
-        console.log("Submitting Payload:", payload);
+        // For update: include the form id at the root level
+        if (isEditMode && formId) {
+            payload.id = parseInt(formId, 10);
+        }
+
+        console.log("Submitting Payload:", JSON.stringify(payload, null, 2));
 
         try {
-            // Dispatch the thunk
-            const resultAction = await dispatch(createForm(payload));
-            
-            if (createForm.fulfilled.match(resultAction)) {
-                const generatedLink = resultAction.payload?.link;
-                
-                // 2. SAVE IT TO STATE
-                setFormLink(generatedLink);
-                setIsPublished(true);
-                setShowShareModal(true);
-                // Note: resultAction.payload usually contains the newly created form ID from backend
+            if (isEditMode) {
+                // ── EDIT MODE: POST /form/add/update with id in body ──
+                const resultAction = await dispatch(updateForm(payload));
+                if (updateForm.fulfilled.match(resultAction)) {
+                    setIsPublished(true);
+                    alert("Form updated successfully!");
+                } else {
+                    alert("Failed to update form: " + (resultAction.payload?.message || "Unknown error"));
+                }
             } else {
-                alert("Failed to create form: " + (resultAction.payload?.message || "Unknown error"));
+                // ── CREATE MODE: POST /form/add/update without id ──
+                const resultAction = await dispatch(createForm(payload));
+                if (createForm.fulfilled.match(resultAction)) {
+                    const generatedLink = resultAction.payload?.link;
+                    setFormLink(generatedLink);
+                    setIsPublished(true);
+                    setShowShareModal(true);
+                } else {
+                    alert("Failed to create form: " + (resultAction.payload?.message || "Unknown error"));
+                }
             }
         } catch (error) {
-            console.error("Error creating form:", error);
-            alert("An error occurred while publishing.");
+            console.error("Error saving form:", error);
+            alert("An error occurred while saving.");
         }
     };
 
     return (
         <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'var(--bg-main)' }}>
 
-            {/* Top Bar (Unchanged) */}
+            {/* Loading overlay when fetching existing form in edit mode */}
+            {isLoadingForm && (
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ background: 'var(--bg-main)' }}>
+                    <Loader2 className="w-10 h-10 animate-spin text-[#8624F0] mb-4" />
+                    <p style={{ color: 'var(--text-secondary)' }}>Loading form data...</p>
+                </div>
+            )}
+
+            {/* Top Bar */}
             <div
                 className="px-6 py-4 flex items-center justify-between shrink-0"
                 style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border-color)' }}
@@ -197,6 +279,11 @@ export default function FormBuilderPage() {
                         style={{ color: 'var(--text-primary)' }}
                         placeholder="Form Title"
                     />
+                    {isEditMode && (
+                        <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-[#8624F0]/10 text-[#8624F0]">
+                            ✏️ Edit Mode
+                        </span>
+                    )}
                 </div>
                 <div className="flex items-center gap-2">
                     <button
@@ -217,10 +304,17 @@ export default function FormBuilderPage() {
                     </button>
                     <button
                         onClick={handlePublish}
-                        className="flex items-center gap-2 px-5 py-2 bg-[#8624F0] text-white rounded-[10px] font-bold text-sm hover:bg-[#6c1dc0] transition-colors"
+                        disabled={loading}
+                        className="flex items-center gap-2 px-5 py-2 bg-[#8624F0] text-white rounded-[10px] font-bold text-sm hover:bg-[#6c1dc0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                        <Share2 className="w-4 h-4" />
-                        {isPublished ? "Published" : "Publish"}
+                        {loading
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : <Share2 className="w-4 h-4" />
+                        }
+                        {isEditMode
+                            ? (isPublished ? "Updated" : "Update Form")
+                            : (isPublished ? "Published" : "Publish")
+                        }
                     </button>
                 </div>
             </div>

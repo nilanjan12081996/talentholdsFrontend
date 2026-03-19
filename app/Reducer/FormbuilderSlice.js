@@ -163,7 +163,41 @@ export const allFormList = createAsyncThunk(
                 return rejectWithValue(response.data);
             }
         } catch (err) {
-            // let errors = errorHandler(err);
+            return rejectWithValue(err);
+        }
+    }
+)
+
+export const getFormById = createAsyncThunk(
+    'getFormById',
+    async (id, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/form/edit/${id}`);
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+)
+
+export const updateForm = createAsyncThunk(
+    'updateForm',
+    // payload already contains `id` at the root level (and field-level ids)
+    // Both create and update use the same POST /form/add/update endpoint.
+    // For update, just include id in the payload body.
+    async (payload, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/form/add/update', payload);
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
             return rejectWithValue(err);
         }
     }
@@ -178,7 +212,8 @@ currentForm:null,
 formsubmitData:"",
 fileuploadData:"",
 videoUploadData:"",
-allforms:[]
+allforms:[],
+editFormData:null
 }
 const FormbuilderSlice=createSlice(
     {
@@ -277,6 +312,30 @@ const FormbuilderSlice=createSlice(
 
         })
         .addCase(allFormList.rejected,(state,{payload})=>{
+            state.loading=false
+            state.error=payload
+        })
+        .addCase(getFormById.pending,(state)=>{
+            state.loading=true
+        })
+        .addCase(getFormById.fulfilled,(state,{payload})=>{
+            state.loading=false
+            state.editFormData=payload?.data
+            state.error=false
+        })
+        .addCase(getFormById.rejected,(state,{payload})=>{
+            state.loading=false
+            state.error=payload
+        })
+        .addCase(updateForm.pending,(state)=>{
+            state.loading=true
+        })
+        .addCase(updateForm.fulfilled,(state,{payload})=>{
+            state.loading=false
+            state.createFormData=payload
+            state.error=false
+        })
+        .addCase(updateForm.rejected,(state,{payload})=>{
             state.loading=false
             state.error=payload
         })
