@@ -673,9 +673,7 @@ export default function Candidates() {
       {/* Workspace Modal */}
       <WorkspaceModal 
         isOpen={showWorkspaceModal} 
-        onClose={() => {
-            if (selectedWorkspace) setShowWorkspaceModal(false);
-        }} 
+        onClose={() => setShowWorkspaceModal(false)} 
         workspaces={workspaceData?.data || []}
         onSelect={handleSelectWorkspace}
       />

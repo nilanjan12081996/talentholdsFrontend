@@ -7,6 +7,7 @@ import DemoSlice from '../Reducer/DemoSlice'
 import AuthSlice from '../Reducer/AuthSlice'
 import FormbuilderSlice from './FormbuilderSlice';
 import CandidateSlice from './CandidateSlice';
+import PlanSlice from './PlanSlice';
 const store=configureStore(
     {
         reducer:{
@@ -16,7 +17,8 @@ const store=configureStore(
             partner:PartnerSlice,
             demo:DemoSlice,
             formBuilder:FormbuilderSlice,
-            candidate:CandidateSlice
+            candidate:CandidateSlice,
+            plan:PlanSlice
         },
         devTools: process.env.NODE_ENV
     }

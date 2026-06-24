@@ -181,9 +181,7 @@ export default function Forms() {
       {/* Modal for Initial Page Load Selection */}
       <WorkspaceModal
         isOpen={showInitialModal}
-        onClose={() => {
-          if (selectedWorkspace) setShowInitialModal(false);
-        }}
+        onClose={() => setShowInitialModal(false)}
         workspaces={workspaceData?.data}
         onSelect={handleInitialWorkspaceSelect}
       />

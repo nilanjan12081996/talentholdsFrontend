@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 
 import Image from 'next/image';
@@ -8,10 +8,49 @@ import logo from '../../assets/imagesource/logo.png';
 
 const Header = () => {
   const [isNavbarOpen, setIsNavbarOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('');
 
   const toggleNavbar = () => {
     setIsNavbarOpen(!isNavbarOpen);
   };
+
+  const handleNavClick = (e, targetId) => {
+    if (window.location.pathname === '/') {
+      e.preventDefault();
+      const element = document.getElementById(targetId);
+      if (element) {
+        // Calculate header offset to scroll accurately
+        const offset = 80; // approximate header height
+        const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({
+          top: elementPosition - offset,
+          behavior: 'smooth'
+        });
+      }
+      setIsNavbarOpen(false);
+    } else {
+      setIsNavbarOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['features', 'pricing'];
+      let current = '';
+      
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element && window.scrollY >= (element.offsetTop - 150)) {
+          current = section;
+        }
+      }
+      setActiveSection(current);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <nav className="fixed w-full z-20 top-0 left-0 backdrop-blur-md border-b border-gray-100">
@@ -49,13 +88,13 @@ const Header = () => {
         <div className={`${isNavbarOpen ? 'block' : 'hidden'} items-center justify-between w-full lg:flex lg:w-auto lg:order-1`} id="navbar-sticky">
           <ul className="flex flex-col p-4 lg:p-0 mt-4 font-medium border border-gray-100 rounded-lg bg-gray-50 lg:flex-row lg:space-x-8 lg:mt-0 lg:border-0 lg:bg-transparent">
             <li>
-              <Link href="/" className="block py-2 pl-3 pr-4 font-medium text-white bg-[#8624f0] rounded lg:bg-transparent lg:text-[#761ED3] lg:p-0" aria-current="page">Home</Link>
+              <Link href="/" onClick={() => { if(window.location.pathname === '/') { window.scrollTo({top:0, behavior:'smooth'}); setIsNavbarOpen(false); } }} className={`block py-2 pl-3 pr-4 font-medium rounded lg:p-0 ${!activeSection ? 'text-white bg-[#8624f0] lg:bg-transparent lg:text-[#761ED3]' : 'text-gray-900 hover:bg-gray-100 lg:hover:bg-transparent lg:hover:text-[#761ED3]'}`} aria-current="page">Home</Link>
             </li>
             <li>
-              <Link href="#" className="block py-2 pl-3 pr-4 font-medium text-gray-900 rounded hover:bg-gray-100 lg:hover:bg-transparent lg:hover:text-[#761ED3] lg:p-0">Pricing</Link>
+              <Link href="/#pricing" onClick={(e) => handleNavClick(e, 'pricing')} className={`block py-2 pl-3 pr-4 font-medium rounded lg:p-0 ${activeSection === 'pricing' ? 'text-white bg-[#8624f0] lg:bg-transparent lg:text-[#761ED3]' : 'text-gray-900 hover:bg-gray-100 lg:hover:bg-transparent lg:hover:text-[#761ED3]'}`}>Pricing</Link>
             </li>
             <li>
-              <Link href="#" className="block py-2 pl-3 pr-4 font-medium text-gray-900 rounded hover:bg-gray-100 lg:hover:bg-transparent lg:hover:text-[#761ED3] lg:p-0">Features</Link>
+              <Link href="/#features" onClick={(e) => handleNavClick(e, 'features')} className={`block py-2 pl-3 pr-4 font-medium rounded lg:p-0 ${activeSection === 'features' ? 'text-white bg-[#8624f0] lg:bg-transparent lg:text-[#761ED3]' : 'text-gray-900 hover:bg-gray-100 lg:hover:bg-transparent lg:hover:text-[#761ED3]'}`}>Features</Link>
             </li>
             <li className="lg:hidden mt-4 pt-4 border-t border-gray-200 flex flex-col gap-3">
               <Link href="/login" className="block text-center text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 font-medium rounded-lg text-sm px-5 py-2.5">

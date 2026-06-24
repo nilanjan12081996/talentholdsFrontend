@@ -1,9 +1,10 @@
 "use client";
 
 import { Geist, Geist_Mono, DM_Sans, Poppins, Bricolage_Grotesque } from "next/font/google";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import bannerImg from "../assets/imagesource/banner_img.png";
 import hiringImage from "../assets/imagesource/hiring_img.png";
 import featureImage from "../assets/imagesource/feature_img.png";
@@ -16,6 +17,8 @@ import videoIcon from "../assets/imagesource/video_icon.png";
 import linkIcon from "../assets/imagesource/link_icon.png";
 
 import { IoIosArrowDroprightCircle } from "react-icons/io";
+import { getPlans } from "./Reducer/PlanSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -51,6 +54,14 @@ const FeatureIcon = ({ color }) => (
 
 
 export default function Home() {
+
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { plans } = useSelector((state) => state.plan);
+
+  useEffect(() => {
+    dispatch(getPlans())
+  }, [dispatch]);
 
   const [openFaq, setOpenFaq] = useState(null);
 
@@ -93,7 +104,7 @@ export default function Home() {
               </p>
 
               <div className="flex gap-4">
-                <button className="bg-[#761ED3] text-white px-8 py-3.5 rounded-lg font-medium hover:bg-[#8e2dd1] cursor-pointer transition-colors shadow-lg shadow-purple-200 flex items-center gap-2">
+                <button onClick={() => router.push('/signup')} className="bg-[#761ED3] text-white px-8 py-3.5 rounded-lg font-medium hover:bg-[#8e2dd1] cursor-pointer transition-colors shadow-lg shadow-purple-200 flex items-center gap-2">
                   Get Started Now <IoIosArrowDroprightCircle className="text-[#FB4D18] text-2xl" />
                 </button>
               </div>
@@ -122,7 +133,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="pt-10 lg:py-20">
+      <section id="features" className="pt-10 lg:py-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="lg:w-1/2">
@@ -137,7 +148,7 @@ export default function Home() {
                     <h3 className="font-bold text-[18px] lg:text-[25px] text-[#1E1E4B] mb-2">Turn Your Employees Into Talent Scouts</h3>
                     <p className="text-base text-[#3F3F3F] font-medium pb-1">Track Employee Referrals Properly</p>
                     <p className="text-gray-600 text-sm leading-relaxed">
-                      Track Employee Referrals ProperlyShare a referral link internally and let employees submit candidates with resumes, 
+                      Track Employee Referrals ProperlyShare a referral link internally and let employees submit candidates with resumes,
                       notes, and optional intro videos. Track referrals, hiring progress, and rewards in one place.
                     </p>
                   </div>
@@ -150,35 +161,35 @@ export default function Home() {
                     <h3 className="font-bold text-[18px] lg:text-[25px] text-[#1E1E4B] mb-2" >Video Introduction</h3>
                     <p className="text-base text-[#3F3F3F] font-medium pb-1">See the Candidate Before the Interview</p>
                     <p className="text-gray-600 text-sm leading-relaxed">
-                      See the Candidate Before the Interview Let candidates introduce themselves through short videos to 
+                      See the Candidate Before the Interview Let candidates introduce themselves through short videos to
                       screen communication, confidence, and clarity before interviews.
                     </p>
                   </div>
                 </div>
-                  <div className="flex gap-4">
-                    <div className="mt-1 w-[70px] h-[70px] rounded-[100%] bg-white shadow-xl p-4 flex items-center justify-center">
+                <div className="flex gap-4">
+                  <div className="mt-1 w-[70px] h-[70px] rounded-[100%] bg-white shadow-xl p-4 flex items-center justify-center">
                     <Image src={linkIcon} alt='linkIcon' className="w-9/12" />
                   </div>
-                    <div className="w-11/12">
-                      <h3 className="font-bold text-[18px] lg:text-[25px] text-[#1E1E4B] mb-2">One Link Hiring</h3>
-                      <p className="text-base text-[#3F3F3F] font-medium pb-1">Just Share a Link. Start Receiving Applications.</p>
-                      <p className="text-gray-600 text-sm leading-relaxed">
-                        Just Share a Link. Start Receiving Applications. No career page or complex setup needed. Create a job, 
-                        share the link anywhere, and all applications land directly in your dashboard—organized and ready to review.
-                      </p>
-                      <p className="text-base text-[#3F3F3F] font-medium pb-1">No resumes lost. No inbox overload.</p>
-                    </div>
+                  <div className="w-11/12">
+                    <h3 className="font-bold text-[18px] lg:text-[25px] text-[#1E1E4B] mb-2">One Link Hiring</h3>
+                    <p className="text-base text-[#3F3F3F] font-medium pb-1">Just Share a Link. Start Receiving Applications.</p>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      Just Share a Link. Start Receiving Applications. No career page or complex setup needed. Create a job,
+                      share the link anywhere, and all applications land directly in your dashboard—organized and ready to review.
+                    </p>
+                    <p className="text-base text-[#3F3F3F] font-medium pb-1">No resumes lost. No inbox overload.</p>
+                  </div>
                 </div>
               </div>
             </div>
             <div className="lg:w-1/2">
-                <Image src={featureImage} alt='featureImage' className="" /> 
+              <Image src={featureImage} alt='featureImage' className="" />
             </div>
-     </div>
-  </div>
-  </section>
+          </div>
+        </div>
+      </section>
 
-  {/* Dashboard Preview */}
+      {/* Dashboard Preview */}
       <section className="py-10 lg:py-20 bg-white dashboard_area">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h2 className="lg:text-[40px] lg:leading-[48px] text-2xl font-bold text-[#1E1E4B] mb-8">Unified Hiring Dashboard</h2>
@@ -189,75 +200,75 @@ export default function Home() {
           </div>
         </div>
       </section>
-    
+
       {/* Why TalentHold */}
       <section className="py-10 lg:py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex flex-col lg:flex-row items-center gap-16">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="lg:w-1/2 order-2 lg:order-1">
               <div className="bg-blue-50 rounded-3xl p-8 flex items-center justify-center min-h-[400px]">
-                  <Image src={whyImg} alt='whyImg' className="" />
+                <Image src={whyImg} alt='whyImg' className="" />
               </div>
             </div>
             <div className="lg:w-1/2 order-1 lg:order-2">
               <h2 className="lg:text-[40px] lg:leading-[48px] text-2xl font-bold text-[#1E1E4B] mb-4">Why TalentHold</h2>
               <p className="text-gray-600 mb-8 leading-relaxed">
-                 Built for speed, not complexity, TalentHold helps you move from job post to first applicant in minutes. Share a single 
-                 link anywhere and turn any post into a live hiring pipeline that keeps collecting talent without losing candidates between 
-                 email and interview. With your entire pipeline on one screen, teams hiring 5 to 100 people a year can shortlist faster, 
-                 schedule interviews quicker, and make hires with confidence—bringing organized hiring from day one.
+                Built for speed, not complexity, TalentHold helps you move from job post to first applicant in minutes. Share a single
+                link anywhere and turn any post into a live hiring pipeline that keeps collecting talent without losing candidates between
+                email and interview. With your entire pipeline on one screen, teams hiring 5 to 100 people a year can shortlist faster,
+                schedule interviews quicker, and make hires with confidence—bringing organized hiring from day one.
               </p>
               <ul className="space-y-4">
-                   {[
-                     "Modern hiring tool built for startups",        
-                      "No complex ATS setup" ,               
-                      "Create job links in seconds",
-                      "Collect structured applications (not emails)",
-                      "Resume + video screening",
-                      "Manage referrals without spreadsheets" ,               
-                      "Clean, simple interface",
-                      "Move candidates through stages clearly",
-                      "Track all candidates in one place"
-                    ]. map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-3 text-gray-700">
-                        <div className="w-5 h-5 rounded-full bg-[#eedeff] text-[#8624f0] flex items-center justify-center text-xs">✓</div>
-                        {item}
-                      </li>
-                    ))}
-                </ul>
+                {[
+                  "Modern hiring tool built for startups",
+                  "No complex ATS setup",
+                  "Create job links in seconds",
+                  "Collect structured applications (not emails)",
+                  "Resume + video screening",
+                  "Manage referrals without spreadsheets",
+                  "Clean, simple interface",
+                  "Move candidates through stages clearly",
+                  "Track all candidates in one place"
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-3 text-gray-700">
+                    <div className="w-5 h-5 rounded-full bg-[#eedeff] text-[#8624f0] flex items-center justify-center text-xs">✓</div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
-        </div> 
+        </div>
       </section>
-        
+
       {/* FAQ Section */}
       <section className="py-10 lg:py-20 bg-white">
-            <div className="max-w-5xl mx-auto px-4">
-              <h2 className="lg:text-[40px] lg:leading-[48px] text-2xl font-bold text-[#1E1E4B] text-center mb-6">Frequently asked Questions</h2>
-              <p className="text-gray-500 max-w-3xl mb-12 mx-auto text-center">
-                 Yes. TalentHold lets you view applicants and employee referrals together, along with assigned recruiters, notes, resumes, 
-                 and video introductions — all in one hiring pipeline.
-              </p>
-                
-              <div className="space-y-4">
-              {faqs.map((faq, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden">
-                      <button
-                      onClick={() => toggleFaq(index)}
-                        className="w-full flex justify-between items-center p-5 text-left font-medium text-[#1E1E4B] hover:bg-gray-100 transition-colors"
-                      >
-                      {faq.question}
-                      <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform ${openFaq === index ? 'rotate-180' : ''}`} />
-                      </button>
-                      {openFaq === index && (
-                            <div className="p-5 pt-0 text-gray-600 text-sm leading-relaxed border-t border-gray-100">
-                            {   faq.answer}
-                            </div>
-                      )}
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="lg:text-[40px] lg:leading-[48px] text-2xl font-bold text-[#1E1E4B] text-center mb-6">Frequently asked Questions</h2>
+          <p className="text-gray-500 max-w-3xl mb-12 mx-auto text-center">
+            Yes. TalentHold lets you view applicants and employee referrals together, along with assigned recruiters, notes, resumes,
+            and video introductions — all in one hiring pipeline.
+          </p>
+
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div key={index} className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden">
+                <button
+                  onClick={() => toggleFaq(index)}
+                  className="w-full flex justify-between items-center p-5 text-left font-medium text-[#1E1E4B] hover:bg-gray-100 transition-colors"
+                >
+                  {faq.question}
+                  <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform ${openFaq === index ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === index && (
+                  <div className="p-5 pt-0 text-gray-600 text-sm leading-relaxed border-t border-gray-100">
+                    {faq.answer}
                   </div>
-                ))} 
+                )}
               </div>
-          </div>   
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* CTA Section */}
@@ -275,7 +286,7 @@ export default function Home() {
               <p className="text-gray-600 max-w-lg mb-8 relative z-10">
                 Stop managing hiring in emails and spreadsheets. Start hiring with structure and simplicity.
               </p>
-              <button className="bg-[#761ED3] text-white cursor-pointer px-8 py-3.5 rounded-lg font-medium hover:bg-[#8e2dd1] transition-colors shadow-lg shadow-purple-200 relative z-10 flex items-center gap-2">
+              <button onClick={() => router.push('/signup')} className="bg-[#761ED3] text-white cursor-pointer px-8 py-3.5 rounded-lg font-medium hover:bg-[#8e2dd1] transition-colors shadow-lg shadow-purple-200 relative z-10 flex items-center gap-2">
                 Get Started Free <IoIosArrowDroprightCircle className="text-[#FB4D18] text-2xl" />
               </button>
             </div>
@@ -284,7 +295,7 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 bg-white">
+      <section id="pricing" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="lg:text-[40px] lg:leading-[48px] text-2xl font-bold text-[#1E1E4B] mb-4">Pricing Plans</h2>
@@ -313,15 +324,15 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                
-                { plan.active ? 
-                <button className={`w-full py-2.5 rounded-lg font-medium transition-colors text-sm ${plan.buttonColor}`}>
-                  Try 1 month
-                </button>
-                :
-                <button className={`w-full py-2.5 rounded-lg font-medium transition-colors text-sm ${plan.buttonColor}`}>
-                  Choose
-                </button>
+
+                {plan.active ?
+                  <button className={`w-full py-2.5 rounded-lg font-medium transition-colors text-sm ${plan.buttonColor}`}>
+                    Try 1 month
+                  </button>
+                  :
+                  <button className={`w-full py-2.5 rounded-lg font-medium transition-colors text-sm ${plan.buttonColor}`}>
+                    Choose
+                  </button>
                 }
               </div>
             ))}

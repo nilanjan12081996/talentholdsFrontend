@@ -34,6 +34,7 @@ const publicRoutes = [
 const noLayoutRoutes = [
   '/login',
   '/signup',
+  '/verify',
   '/forgot-password',
   '/forms/builder',
   '/import',
@@ -82,7 +83,7 @@ export default function ClientLayoutWrapper({ children }) {
   // 2. Authenticated dashboard layout — InsideHeader + Sidebar (no Footer)
   if (token) {
     return (
-      <div className="flex bg-[#eff2f9] min-h-screen">
+      <div className="flex bg-bg-main min-h-screen">
         <div className="flex-1 flex flex-col min-w-0">
           <Insideheader>
             {children}

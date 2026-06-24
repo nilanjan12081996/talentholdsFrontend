@@ -1071,9 +1071,7 @@ export default function Inbox() {
       {/* Workspace Modal Overlay */}
       <WorkspaceModal 
         isOpen={showWorkspaceModal} 
-        onClose={() => {
-            if (selectedWorkspace) setShowWorkspaceModal(false);
-        }} 
+        onClose={() => setShowWorkspaceModal(false)} 
         workspaces={workspaceData?.data || []}
         onSelect={handleSelectWorkspace}
       />

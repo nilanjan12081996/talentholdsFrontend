@@ -1,7 +1,7 @@
 'use client';
 
 import axios from 'axios';
-const api = axios.create({ baseURL: process.env.NEXT_PUBLIC_API_BASE_URL });
+const api = axios.create({ baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL}/api` });
 
 const formDataURL = ['user/user-profile/change-avatar'];
 api.interceptors.request.use((req) => {
@@ -12,11 +12,12 @@ api.interceptors.request.use((req) => {
         userTokenData = null;
     }
     let token = userTokenData && userTokenData.token ? userTokenData.token : null;
-    // Temp Hack to make formData work
-    req.headers['Content-Type'] = 'application/json';
-
-    if (formDataURL.includes(req.url)) {
+    if (req.data instanceof FormData) {
+        delete req.headers['Content-Type'];
+    } else if (formDataURL.includes(req.url)) {
         req.headers['Content-Type'] = 'multipart/form-data';
+    } else {
+        req.headers['Content-Type'] = 'application/json';
     }
     if (token) {
         req.headers.Authorization = `Bearer ${token}`;
