@@ -355,7 +355,7 @@
 'use client';
 
 import { Search, Upload, X, Loader2 } from 'lucide-react'; 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { GrOverview } from 'react-icons/gr';
@@ -369,6 +369,7 @@ import { RiArrowDropDownLine } from 'react-icons/ri';
 // Import your WorkspaceModal and Redux actions
 import WorkspaceModal from '../forms/WorkspaceModal'; 
 import { getCandidateByWorkspace } from '../Reducer/CandidateSlice';
+import { workspaceList } from '../Reducer/WorkspaceSlice';
 import CandidateChat from './CandidateChat';
 
 export default function Candidates() {
@@ -383,8 +384,28 @@ export default function Candidates() {
   const [popupView, setPopupView] = useState('details');
 
   // Fetch Workspaces and Candidates from Redux
-  const { workspaceData } = useSelector((state) => state?.auth || {});
+  const { workspaceData } = useSelector((state) => state?.workspace || {});
   const { candidate, loading } = useSelector((state) => state?.candidate || {});
+
+  useEffect(() => {
+    dispatch(workspaceList());
+  }, [dispatch]);
+
+  // Auto-Select Primary Workspace Logic
+  useEffect(() => {
+    if (workspaceData?.data && !selectedWorkspace) {
+      const workspaces = workspaceData.data;
+      const primaryId = localStorage.getItem('primaryWorkspaceId');
+      
+      if (workspaces.length === 1) {
+        handleSelectWorkspace(workspaces[0].id);
+      } else if (workspaces.length > 1 && primaryId && workspaces.find(w => w.id == primaryId)) {
+        handleSelectWorkspace(primaryId);
+      } else {
+        setShowWorkspaceModal(true);
+      }
+    }
+  }, [workspaceData]);
 
   // --- NEW FLATTENING LOGIC BASED ON YOUR JSON ---
   const rawForms = candidate?.data?.formDto || [];

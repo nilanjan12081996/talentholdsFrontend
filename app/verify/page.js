@@ -5,16 +5,22 @@ import { useEffect, useState } from 'react';
 
 import Image from "next/image";
 import loginLogo from "../../assets/imagesource/login_logo.png";
-import { verifyOtp, workspaceList } from '../Reducer/AuthSlice';
+import { verifyOtp, resendOtp } from '../Reducer/AuthSlice';
+import { workspaceList } from '../Reducer/WorkspaceSlice';
 import { useDispatch, useSelector } from 'react-redux';
 
 export default function Verify() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const{otpData}=useSelector((state)=>state?.auth)
+  const { otpData } = useSelector((state) => state?.auth)
   const router = useRouter();
-  const dispatch=useDispatch()
+  const dispatch = useDispatch()
   const [code, setCode] = useState(['', '', '', '', '', '']);
+
+  // Resend OTP states
+  const [timer, setTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   let userId = null;
   let email = '';
@@ -37,6 +43,36 @@ export default function Verify() {
     }
   }
 
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const startTimer = () => {
+    setTimer(60);
+    setCanResend(false);
+  }
+
+  const handleResendOtp = () => {
+    if (!email || !userId) return;
+    setIsSendingOtp(true);
+    dispatch(resendOtp({ email, id: Number(userId) })).then((res) => {
+      setIsSendingOtp(false);
+      const payload = res?.payload;
+      if (payload?.statusCode === 200) {
+        startTimer();
+      } else {
+        alert(payload?.message || "Failed to resend OTP");
+      }
+    });
+  }
 
   const handleInputChange = (value, index) => {
     if (!/^\d*$/.test(value)) return;
@@ -139,9 +175,18 @@ console.log("otpData",otpData);
           ))}
         </div>
 
-        <p className="text-[#545454] text-[18px] mb-8 w-full max-w-[440px] text-left">
-          Didn&apos;t receive the code?
-        </p>
+        <div className="flex items-center gap-2 mb-8 w-full max-w-[440px] text-left">
+          <span className="text-[#545454] text-[16px]">
+            Didn&apos;t receive the code?
+          </span>
+          <button
+            onClick={handleResendOtp}
+            disabled={!canResend || isSendingOtp}
+            className={`font-semibold text-[16px] ${canResend ? 'text-[#761ed3] hover:underline cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}
+          >
+            {isSendingOtp ? "Sending..." : (timer > 0 ? `Resend (${timer}s)` : "Resend")}
+          </button>
+        </div>
 
         <button
           onClick={handleSubmit}

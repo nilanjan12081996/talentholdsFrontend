@@ -48,6 +48,9 @@ const helveticaNeue = localFont({
   variable: "--font-helvetica-neue",
 });
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 export const metadata = {
   title: "TalentHold",
   description: "TalentHold",
@@ -63,6 +66,7 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           <ClientLayoutWrapper>
             {children}
+            <ToastContainer position="top-right" autoClose={3000} />
           </ClientLayoutWrapper>
         </ThemeProvider>
         </Providers>

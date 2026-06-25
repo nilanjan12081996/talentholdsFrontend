@@ -8,14 +8,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ArrowUpCircle, Check, Plus, LogOut, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import { workspaceList, logout, getProfile } from '../Reducer/AuthSlice';
+import { logout, getProfile } from '../Reducer/AuthSlice';
 
 export default function TopBar({ onMenuClick }) {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
     const { isDark, toggleTheme } = useTheme();
-    const { workspaceData, profileData } = useSelector((state) => state?.auth);
+    const { profileData } = useSelector((state) => state?.auth);
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -31,7 +31,6 @@ export default function TopBar({ onMenuClick }) {
     }, [dropdownRef]);
 
     useEffect(() => {
-        dispatch(workspaceList());
         dispatch(getProfile());
     }, [dispatch]);
 
@@ -57,7 +56,6 @@ export default function TopBar({ onMenuClick }) {
         return `${cleanBase}${cleanPath}`;
     };
 
-    console.log("workspaceData", workspaceData);
     console.log("profileData", profileData);
 
 
@@ -68,20 +66,20 @@ export default function TopBar({ onMenuClick }) {
                 {/* Mobile Menu Button */}
                 <button
                     onClick={onMenuClick}
-                    className="md:hidden p-1 text-[#A3AED0] hover:text-[#2b3674] transition-colors -ml-2"
+                    className="cursor-pointer md:hidden p-1 text-[#A3AED0] hover:text-[#2b3674] transition-colors -ml-2"
                 >
                     <Menu size={24} />
                 </button>
 
                 <div className="flex items-center gap-4 text-[#A3AED0] hidden sm:flex">
-                    <button className="hover:text-[#2b3674] transition-colors"><Bell size={20} /></button>
+                    <button className="cursor-pointer hover:text-[#2b3674] transition-colors"><Bell size={20} /></button>
                     <button
                         onClick={toggleTheme}
-                        className="hover:text-[#2b3674] dark:hover:text-white transition-colors"
+                        className="cursor-pointer hover:text-[#2b3674] dark:hover:text-white transition-colors"
                     >
                         {isDark ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
-                    <button className="hover:text-[#2b3674] transition-colors"><Info size={20} /></button>
+                    <button className="cursor-pointer hover:text-[#2b3674] transition-colors"><Info size={20} /></button>
                 </div>
             </div>
 
@@ -136,39 +134,6 @@ export default function TopBar({ onMenuClick }) {
                         >
                             <ArrowUpCircle size={18} />
                             Upgrade Plan
-                        </button>
-
-                        <div className="border-b border-border-color my-4"></div>
-                        <p className="text-xs font-semibold text-text-secondary mb-2 px-1">Workspace</p>
-
-                        {/* Active Workspace */}
-                        {
-                            workspaceData?.data?.map((work)=>{
-                                return(
-                                    <>
-                                        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 bg-[#7B6341] rounded flex items-center justify-center text-white text-sm">
-                                    I
-                                </div>
-                                <span className="font-bold text-text-primary text-sm">{work?.name}</span>
-                            </div>
-                            <Check size={16} className="text-text-primary" strokeWidth={3} />
-                        </div>
-                                    </>
-                                )
-                            })
-                        }
-                    
-                      
-
-                        {/* Add Workspace */}
-                        <button
-                            onClick={() => router.push('/workspace')}
-                            className="cursor-pointer w-full bg-[#F5F0FF] hover:bg-[#ede5ff] text-[#8B5CF6] rounded-lg py-2.5 flex items-center justify-center gap-2 text-sm font-medium transition-colors"
-                        >
-                            <Plus size={18} />
-                            Add new workspace
                         </button>
 
                         <div className="border-t border-border-color my-3"></div>

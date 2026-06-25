@@ -1,17 +1,21 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
     ArrowLeft, Eye, Settings as SettingsIcon,
-    Share2, GripVertical, Trash2, Plus, Loader2,
+    Share2, GripVertical, Trash2, Plus, Loader2, Pencil
 } from "lucide-react";
 import FieldBlocks from "../../ui/form-builder/FieldBlocks"
 import FieldSettings from "../../ui/form-builder/FieldSettings";
 import ShareModal from "../../ui/form-builder/ShareModal";
-import { useSearchParams } from "next/navigation";
+import SettingsModal from "../../ui/form-builder/SettingsModal";
+import DeleteConfirmModal from "../../ui/form-builder/DeleteConfirmModal";
+import UnsavedConfirmModal from "../../ui/form-builder/UnsavedConfirmModal";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { createForm, getFormById, updateForm } from "../../Reducer/FormbuilderSlice"
+import { createForm, getFormById, updateForm, deleteFormField } from "../../Reducer/FormbuilderSlice"
+import { toast } from 'react-toastify';
 
 // Maps API field type codes back to UI type strings
 const apiCodeToUiType = {
@@ -45,6 +49,35 @@ export default function FormBuilderPage() {
     const [showShareModal, setShowShareModal] = useState(false);
     const [selectedFieldId, setSelectedFieldId] = useState(null);
     const [isLoadingForm, setIsLoadingForm] = useState(false);
+    const [isUnsaved, setIsUnsaved] = useState(false);
+    const [descriptionError, setDescriptionError] = useState("");
+    const [requirePassword, setRequirePassword] = useState(false);
+    const [password, setPassword] = useState("");
+    const [closeForm, setCloseForm] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [fieldToDeleteId, setFieldToDeleteId] = useState(null);
+    const [isDeletingField, setIsDeletingField] = useState(false);
+    const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+    const descriptionRef = useRef(null);
+
+    const router = useRouter();
+
+    // Auto-resize description textarea
+    useEffect(() => {
+        if (descriptionRef.current) {
+            descriptionRef.current.style.height = 'auto';
+            descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`;
+        }
+    }, [formDescription]);
+
+    const handleBack = (e) => {
+        e.preventDefault();
+        if (isUnsaved) {
+            setShowUnsavedModal(true);
+        } else {
+            router.push("/forms");
+        }
+    };
 
     const DEFAULT_FIELDS = [
         {
@@ -111,11 +144,18 @@ export default function FormBuilderPage() {
 
     const getDefaultLabel = (type) => {
         const labels = {
-            "short-text": "Short Answer", "long-text": "Long Answer",
-            "email": "Email Address", "phone": "Phone Number",
-            "number": "Number", "date": "Date",
-            "multiple-choice": "Multiple Choice Question", "checkbox": "Checkboxes",
-            "dropdown": "Dropdown", "file-upload": "File Upload",
+            "short-text": "Short Text", 
+            "long-text": "Long Text (Textarea)",
+            "email": "Email Address", 
+            "phone": "Phone Number",
+            "number": "Number", 
+            "date": "Date Picker",
+            "multiple-choice": "Radio Button", 
+            "checkbox": "Checkbox",
+            "dropdown": "Dropdown (Select)", 
+            "file-upload": "File Upload",
+            "multi-select": "Multi-Select",
+            "video": "Video Upload",
             "rating": "Rating", "heading": "Heading",
             "paragraph": "Paragraph", "divider": "Divider",
         };
@@ -123,11 +163,12 @@ export default function FormBuilderPage() {
     };
 
     const addField = (type) => {
+        setIsUnsaved(true);
         const newField = {
             id: `field-${Date.now()}`, type,
             label: getDefaultLabel(type), placeholder: "",
             required: false, description: "",
-            options: ["multiple-choice", "checkbox", "dropdown"].includes(type) ? ["Option 1", "Option 2"] : undefined,
+            options: ["multiple-choice", "checkbox", "dropdown", "multi-select"].includes(type) ? ["Option 1", "Option 2"] : undefined,
             isDeletable: true // 2. NEW FIELDS CAN BE DELETED
         };
         setFields([...fields, newField]);
@@ -135,22 +176,57 @@ export default function FormBuilderPage() {
     };
 
     const updateField = (id, updates) => {
+        setIsUnsaved(true);
         setFields(fields.map((f) => (f.id === id ? { ...f, ...updates } : f)));
     };
 
     const deleteField = (id) => {
-        setFields(fields.filter((f) => f.id !== id));
-        if (selectedFieldId === id) setSelectedFieldId(null);
+        const fieldToDelete = fields.find((f) => f.id === id);
+        
+        if (fieldToDelete && fieldToDelete._apiId) {
+            setFieldToDeleteId(id);
+        } else {
+            setIsUnsaved(true);
+            setFields(fields.filter((f) => f.id !== id));
+            if (selectedFieldId === id) setSelectedFieldId(null);
+        }
+    };
+
+    const confirmDeleteField = () => {
+        if (!fieldToDeleteId) return;
+        const fieldToDelete = fields.find((f) => f.id === fieldToDeleteId);
+        if (!fieldToDelete || !fieldToDelete._apiId) return;
+
+        setIsDeletingField(true);
+        dispatch(deleteFormField(fieldToDelete._apiId)).then((res) => {
+            setIsDeletingField(false);
+            if (!res.error) {
+                toast.success("Field deleted successfully");
+                setIsUnsaved(true);
+                setFields(fields.filter((f) => f.id !== fieldToDeleteId));
+                if (selectedFieldId === fieldToDeleteId) setSelectedFieldId(null);
+                setFieldToDeleteId(null);
+            } else {
+                toast.error(res.payload?.message || "Failed to delete field");
+                setFieldToDeleteId(null);
+            }
+        });
     };
 
     const moveField = (fromIndex, toIndex) => {
+        setIsUnsaved(true);
         const updated = [...fields];
         const [moved] = updated.splice(fromIndex, 1);
         updated.splice(toIndex, 0, moved);
         setFields(updated);
     };
 
-    const handlePublish = async() => {
+    const handlePublish = async () => {
+        if (!formDescription || formDescription.trim() === "") {
+            setDescriptionError("Description is required");
+            return;
+        }
+
         if (!workspaceId) {
             alert("No workspace selected. Please go back and select a workspace.");
             return;
@@ -171,13 +247,28 @@ export default function FormBuilderPage() {
             "video": "VIDEO"
         };
 
+        const fallbackIds = {
+            "SHORT_TEXT": 1,
+            "LONG_TEXT": 2,
+            "EMAIL": 3,
+            "PHONE": 4,
+            "NUMBER": 5,
+            "SELECT": 6,
+            "RADIO": 7,
+            "CHECKBOX": 8,
+            "MULTI_SELECT": 9,
+            "DATE": 10,
+            "FILE": 11,
+            "VIDEO": 12
+        };
+
         const formattedFields = fields.map(field => {
             // 1. Get the API CODE string (e.g., "SHORT_TEXT")
             const apiCode = reverseTypeMap[field.type] || field.type.toUpperCase();
 
             // 2. Find the numerical ID from the formTypeData fetched from Redux
             const apiFieldObj = apiFieldTypes.find(t => t.code === apiCode);
-            const fieldTypeId = apiFieldObj ? apiFieldObj.id : 1; // Fallback to 1 if not found
+            const fieldTypeId = apiFieldObj ? apiFieldObj.id : (fallbackIds[apiCode] || 1); // Fallback to mapped ID or 1
 
             // 3. Build the base field object
             const payloadField = {
@@ -223,9 +314,10 @@ export default function FormBuilderPage() {
                 const resultAction = await dispatch(updateForm(payload));
                 if (updateForm.fulfilled.match(resultAction)) {
                     setIsPublished(true);
-                    alert("Form updated successfully!");
+                    setIsUnsaved(false);
+                    toast.success("Form updated successfully!");
                 } else {
-                    alert("Failed to update form: " + (resultAction.payload?.message || "Unknown error"));
+                    toast.error("Failed to update form: " + (resultAction.payload?.message || "Unknown error"));
                 }
             } else {
                 // ── CREATE MODE: POST /form/add/update without id ──
@@ -234,14 +326,16 @@ export default function FormBuilderPage() {
                     const generatedLink = resultAction.payload?.link;
                     setFormLink(generatedLink);
                     setIsPublished(true);
-                    setShowShareModal(true);
+                    setIsUnsaved(false);
+                    // Share modal will not open automatically, user can click "Share" button
+                    toast.success("Form created successfully!");
                 } else {
-                    alert("Failed to create form: " + (resultAction.payload?.message || "Unknown error"));
+                    toast.error("Failed to create form: " + (resultAction.payload?.message || "Unknown error"));
                 }
             }
         } catch (error) {
             console.error("Error saving form:", error);
-            alert("An error occurred while saving.");
+            toast.error("An error occurred while saving.");
         }
     };
 
@@ -262,26 +356,25 @@ export default function FormBuilderPage() {
                 style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border-color)' }}
             >
                 <div className="flex items-center gap-4 flex-1">
-                    <Link href="/forms">
-                        <button
-                            className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
-                            style={{ color: 'var(--text-primary)' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-main)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                        </button>
-                    </Link>
+                    <button
+                        onClick={handleBack}
+                        className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+                        style={{ color: 'var(--text-primary)' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-main)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
                     <input
                         value={formTitle}
-                        onChange={(e) => setFormTitle(e.target.value)}
+                        onChange={(e) => { setFormTitle(e.target.value); setIsUnsaved(true); }}
                         className="text-lg font-semibold border-0 outline-none bg-transparent max-w-md"
                         style={{ color: 'var(--text-primary)' }}
                         placeholder="Form Title"
                     />
                     {isEditMode && (
-                        <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-[#8624F0]/10 text-[#8624F0]">
-                            ✏️ Edit Mode
+                        <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-[#8624F0]/10 text-[#8624F0] flex items-center gap-1.5 border border-[#8624F0]/20">
+                            <Pencil className="w-3.5 h-3.5" /> Edit Mode
                         </span>
                     )}
                 </div>
@@ -295,6 +388,7 @@ export default function FormBuilderPage() {
                         <Eye className="w-5 h-5" />
                     </button>
                     <button
+                        onClick={() => setShowSettingsModal(true)}
                         className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
                         style={{ color: 'var(--text-secondary)' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-main)'}
@@ -304,17 +398,19 @@ export default function FormBuilderPage() {
                     </button>
                     <button
                         onClick={handlePublish}
-                        disabled={loading}
+                        disabled={loading || (!isUnsaved && isEditMode)}
                         className="flex items-center gap-2 px-5 py-2 bg-[#8624F0] text-white rounded-[10px] font-bold text-sm hover:bg-[#6c1dc0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                        {loading
-                            ? <Loader2 className="w-4 h-4 animate-spin" />
-                            : <Share2 className="w-4 h-4" />
-                        }
-                        {isEditMode
-                            ? (isPublished ? "Updated" : "Update Form")
-                            : (isPublished ? "Published" : "Publish")
-                        }
+                        <div className={`w-2.5 h-2.5 rounded-full ${isUnsaved ? 'bg-yellow-400' : 'bg-green-400'}`}></div>
+                        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                        Save
+                    </button>
+                    <button
+                        onClick={() => setShowShareModal(true)}
+                        className="flex items-center gap-2 px-5 py-2 bg-[#e9edf7] text-[#8624F0] rounded-[10px] font-bold text-sm hover:bg-[#d5dff0] transition-colors"
+                    >
+                        <Share2 className="w-4 h-4" />
+                        Share
                     </button>
                 </div>
             </div>
@@ -331,22 +427,36 @@ export default function FormBuilderPage() {
                         <div className="rounded-[20px] shadow-sm p-8" style={{ background: 'var(--bg-card)' }}>
 
                             {/* Form Header */}
-                            <div className="mb-8">
+                            <div className="mb-8 space-y-3">
                                 <input
                                     value={formTitle}
                                     onChange={(e) => setFormTitle(e.target.value)}
-                                    className="w-full text-2xl font-bold border-0 outline-none bg-transparent mb-2"
+                                    className="w-full text-3xl font-bold outline-none bg-transparent mb-2 px-3 py-2 -ml-3 rounded-[10px] border border-transparent hover:border-gray-200 focus:border-[#8624F0] focus:bg-white focus:shadow-sm dark:hover:border-gray-700 dark:focus:bg-gray-800 transition-all"
                                     style={{ color: 'var(--text-primary)' }}
                                     placeholder="Form Title"
                                 />
                                 <textarea
+                                    ref={descriptionRef}
                                     value={formDescription}
-                                    onChange={(e) => setFormDescription(e.target.value)}
-                                    className="w-full text-sm border-0 outline-none bg-transparent resize-none"
-                                    style={{ color: 'var(--text-secondary)' }}
-                                    placeholder="Add a description..."
-                                    rows={2}
+                                    onChange={(e) => { 
+                                        setFormDescription(e.target.value); 
+                                        setIsUnsaved(true); 
+                                        if (e.target.value.trim() !== "") {
+                                            setDescriptionError("");
+                                        }
+                                    }}
+                                    className={`w-full text-[15px] outline-none resize-none overflow-hidden min-h-[80px] px-4 py-3 mt-2 rounded-[12px] border ${descriptionError ? 'border-red-500' : 'focus:border-[#8624F0]'} focus:bg-white focus:shadow-sm transition-all`}
+                                    style={{ 
+                                        background: 'var(--bg-main)', 
+                                        color: 'var(--text-secondary)',
+                                        borderColor: descriptionError ? '#ef4444' : 'var(--border-color)'
+                                    }}
+                                    placeholder="Add a form description *"
+                                    rows={3}
                                 />
+                                {descriptionError && (
+                                    <p className="text-red-500 text-sm mt-1 ml-1 font-medium">{descriptionError}</p>
+                                )}
                             </div>
 
                             {/* Fields */}
@@ -404,6 +514,39 @@ export default function FormBuilderPage() {
                 formLink={formLink}
                 isOpen={showShareModal}
                 onClose={() => setShowShareModal(false)}
+                requirePassword={requirePassword}
+                setRequirePassword={setRequirePassword}
+                password={password}
+                setPassword={setPassword}
+                closeForm={closeForm}
+                setCloseForm={setCloseForm}
+            />
+
+            <SettingsModal
+                isOpen={showSettingsModal}
+                onClose={() => setShowSettingsModal(false)}
+                requirePassword={requirePassword}
+                setRequirePassword={setRequirePassword}
+                password={password}
+                setPassword={setPassword}
+                closeForm={closeForm}
+                setCloseForm={setCloseForm}
+            />
+
+            <DeleteConfirmModal
+                isOpen={!!fieldToDeleteId}
+                isDeleting={isDeletingField}
+                onClose={() => setFieldToDeleteId(null)}
+                onConfirm={confirmDeleteField}
+            />
+
+            <UnsavedConfirmModal
+                isOpen={showUnsavedModal}
+                onClose={() => setShowUnsavedModal(false)}
+                onConfirm={() => {
+                    setShowUnsavedModal(false);
+                    router.push("/forms");
+                }}
             />
         </div>
     );
@@ -457,7 +600,9 @@ function DraggableField({ field, index, isSelected, onSelect, onDelete, onMove }
                         </button>
                     )}
                 </div>
-                <FieldPreview field={field} />
+                <div className="pointer-events-none">
+                    <FieldPreview field={field} />
+                </div>
             </div>
         </div>
     );
@@ -504,10 +649,32 @@ function FieldPreview({ field }) {
                 </div>
             );
         case "dropdown":
-            return <div className="h-[38px] px-3 flex items-center rounded-[8px] text-sm" style={inputStyle}>Select an option</div>;
+            return (
+                <select disabled className={inputClass} style={inputStyle}>
+                    <option value="" disabled selected hidden>
+                        {field.placeholder || "Select an option..."}
+                    </option>
+                    {field.options?.map((option, i) => (
+                        <option key={i} value={option}>
+                            {option}
+                        </option>
+                    ))}
+                </select>
+            );
+        case "multi-select":
+            return (
+                <select multiple disabled className={`${inputClass} min-h-[80px]`} style={inputStyle}>
+                    {field.options?.map((option, i) => (
+                        <option key={i} value={option}>
+                            {option}
+                        </option>
+                    ))}
+                </select>
+            );
         case "date":
             return <input type="date" disabled className={inputClass} style={inputStyle} />;
         case "file-upload":
+        case "video":
             return (
                 <div className="border-2 border-dashed rounded-[8px] p-6 text-center" style={{ borderColor: 'var(--border-color)' }}>
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Click to upload or drag and drop</p>

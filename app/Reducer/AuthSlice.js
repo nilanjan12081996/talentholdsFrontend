@@ -21,7 +21,23 @@ export const sendOtp = createAsyncThunk(
     'auth/sendOtp',
     async (userInput, { rejectWithValue }) => {
         try {
-            const response = await api.post('/user/send-otp', userInput);
+            const response = await api.post('/organization/send-otp', userInput);
+            if (response?.data?.statusCode === 200) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err?.response?.data || err);
+        }
+    }
+)
+
+export const resendOtp = createAsyncThunk(
+    'auth/resendOtp',
+    async (userInput, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/organization/resent/otp', userInput);
             if (response?.data?.statusCode === 200) {
                 return response.data;
             } else {
@@ -65,42 +81,6 @@ export const registration = createAsyncThunk(
             }
         } catch (err) {
             return rejectWithValue(err?.response?.data);
-        }
-    }
-)
-
-export const workspaceList = createAsyncThunk(
-    'auth/workspaceList',
-    async (userInput, { rejectWithValue }) => {
-
-        try {
-            const response = await api.get('/workspace', userInput);
-            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
-                return response.data;
-            } else {
-                return rejectWithValue(response.data);
-            }
-        } catch (err) {
-            // let errors = errorHandler(err);
-            return rejectWithValue(err);
-        }
-    }
-)
-
-export const createWorkspace = createAsyncThunk(
-    'auth/createWorkspace',
-    async (userInput, { rejectWithValue }) => {
-
-        try {
-            const response = await api.post('/workspace/create', userInput);
-            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
-                return response.data;
-            } else {
-                return rejectWithValue(response.data);
-            }
-        } catch (err) {
-            // let errors = errorHandler(err);
-            return rejectWithValue(err);
         }
     }
 )
@@ -167,8 +147,6 @@ const initialState = {
     loadingLogin: false,
     otpData: "",
     registerData: "",
-    workspaceData: [],
-    createWorkspaceData: "",
     profileData: null,
     updateProfileData: null,
     uploadAvatarData: null
@@ -277,32 +255,6 @@ const AuthSlice = createSlice(
                     sessionStorage.setItem("talent_hold_token", JSON.stringify({ token: payload?.token }))
                 })
                 .addCase(registration.rejected, (state, { payload }) => {
-                    state.loading = false
-                    state.error = payload
-                })
-                .addCase(workspaceList.pending, (state) => {
-                    state.loading = true
-                })
-                .addCase(workspaceList.fulfilled, (state, { payload }) => {
-                    state.loading = false
-                    state.workspaceData = payload
-                    state.error = false
-
-                })
-                .addCase(workspaceList.rejected, (state, { payload }) => {
-                    state.loading = false
-                    state.error = payload
-                })
-                .addCase(createWorkspace.pending, (state) => {
-                    state.loading = true
-                })
-                .addCase(createWorkspace.fulfilled, (state, { payload }) => {
-                    state.loading = false
-                    state.createWorkspaceData = payload
-                    state.error = false
-
-                })
-                .addCase(createWorkspace.rejected, (state, { payload }) => {
                     state.loading = false
                     state.error = payload
                 })

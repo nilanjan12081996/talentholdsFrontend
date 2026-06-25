@@ -69,7 +69,7 @@ export default function FieldBlocks({ onAddField }) {
               Loading fields...
             </p>
           ) : (
-            fields.map((field) => {
+            fields.filter(field => field.code !== 'MULTI_SELECT').map((field) => {
               // Get the icon, use FileText as a generic fallback if code is completely new
               const IconComponent = iconMap[field.code] || FileText;
               

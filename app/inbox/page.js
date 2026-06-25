@@ -633,6 +633,7 @@ import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useDispatch, useSelector } from 'react-redux';
 import WorkspaceModal from '../forms/WorkspaceModal';
+import { workspaceList } from '../Reducer/WorkspaceSlice';
 
 // Import your WorkspaceModal (Adjust path if needed)
 
@@ -652,8 +653,30 @@ export default function Inbox() {
   
   // --- NEW WORKSPACE STATES ---
   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
-  const [showWorkspaceModal, setShowWorkspaceModal] = useState(true); // Open by default
-  const { workspaceData } = useSelector((state) => state?.auth || {});
+  const [showWorkspaceModal, setShowWorkspaceModal] = useState(false); // Open conditionally
+  const { workspaceData } = useSelector((state) => state?.workspace || {});
+
+  useEffect(() => {
+    dispatch(workspaceList());
+  }, [dispatch]);
+
+  // Auto-Select Primary Workspace Logic
+  useEffect(() => {
+    if (workspaceData?.data && !selectedWorkspace) {
+      const workspaces = workspaceData.data;
+      const primaryId = localStorage.getItem('primaryWorkspaceId');
+      
+      if (workspaces.length === 1) {
+        setSelectedWorkspace(workspaces[0].id);
+        setShowWorkspaceModal(false);
+      } else if (workspaces.length > 1 && primaryId && workspaces.find(w => w.id == primaryId)) {
+        setSelectedWorkspace(primaryId);
+        setShowWorkspaceModal(false);
+      } else {
+        setShowWorkspaceModal(true);
+      }
+    }
+  }, [workspaceData]);
 
   // Real-time API States
   const [threads, setThreads] = useState([]);

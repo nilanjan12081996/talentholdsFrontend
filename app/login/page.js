@@ -10,6 +10,7 @@ import { login } from '../Reducer/AuthSlice';
 import { useState } from 'react';
 import Link from 'next/link';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
+import { ArrowLeft } from 'lucide-react';
 
 export default function Login() {
   const router = useRouter();
@@ -50,7 +51,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf4fe] flex items-center justify-center p-4 font-sans">
+    <div className="relative min-h-screen bg-[#faf4fe] flex items-center justify-center p-4 font-sans">
+      <Link href="/" className="absolute top-6 left-6 md:top-10 md:left-10 text-[#545454] hover:text-[#761ed3] flex items-center gap-2 font-medium transition-colors z-10">
+        <ArrowLeft size={20} />
+        Back to Home
+      </Link>
       <div className="bg-white rounded-[14px] shadow-sm w-full max-w-[585px] p-8 md:p-12 flex flex-col">
 
         {/* Logo */}

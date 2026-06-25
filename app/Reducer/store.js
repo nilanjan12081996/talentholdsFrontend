@@ -8,10 +8,12 @@ import AuthSlice from '../Reducer/AuthSlice'
 import FormbuilderSlice from './FormbuilderSlice';
 import CandidateSlice from './CandidateSlice';
 import PlanSlice from './PlanSlice';
+import WorkspaceSlice from './WorkspaceSlice';
 const store=configureStore(
     {
         reducer:{
             auth:AuthSlice,
+            workspace:WorkspaceSlice,
             estimate:EstimateSlice,
             contact:ContactUsSlice,
             partner:PartnerSlice,

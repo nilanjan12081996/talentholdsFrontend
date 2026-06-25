@@ -28,7 +28,7 @@ export default function FieldSettings({ field, onUpdate, onClose }) {
   };
 
   return (
-    <div className="w-80 flex flex-col shrink-0" style={{ background: 'var(--bg-card)', borderLeft: '1px solid var(--border-color)' }}>
+    <div className="w-80 flex flex-col shrink-0 animate-in slide-in-from-right duration-300 ease-in-out" style={{ background: 'var(--bg-card)', borderLeft: '1px solid var(--border-color)' }}>
       {/* Header */}
       <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-color)' }}>
         <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Field Settings</h3>
@@ -56,18 +56,19 @@ export default function FieldSettings({ field, onUpdate, onClose }) {
             />
           </div>
 
-          {/* Description */}
+          {/* Description - Commented out for now 
           <div className="space-y-2">
             <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Description</label>
             <textarea
               value={field.description || ""}
               onChange={(e) => onUpdate({ description: e.target.value })}
               placeholder="Add a description (optional)"
-              rows={2}
-              className="w-full px-3 py-2 rounded-[8px] outline-none focus:ring-2 focus:ring-[#8624F0]/30 text-sm resize-none"
+              rows={3}
+              className="w-full px-3 py-2 rounded-[8px] outline-none focus:ring-2 focus:ring-[#8624F0]/30 text-sm resize-y min-h-[60px]"
               style={inputStyle}
             />
           </div>
+          */}
 
           {/* Placeholder */}
           {["short-text", "long-text", "email", "phone", "number"].includes(field.type) && (
@@ -98,7 +99,7 @@ export default function FieldSettings({ field, onUpdate, onClose }) {
                     />
                     <button
                       onClick={() => deleteOption(index)}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
                       <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
                     </button>
@@ -106,7 +107,7 @@ export default function FieldSettings({ field, onUpdate, onClose }) {
                 ))}
                 <button
                   onClick={addOption}
-                  className="w-full py-2 border border-dashed border-[#8624F0] text-[#8624F0] rounded-[8px] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#8624F0]/5 transition-colors"
+                  className="cursor-pointer w-full py-2 border border-dashed border-[#8624F0] text-[#8624F0] rounded-[8px] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#8624F0]/5 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Add Option
@@ -118,12 +119,22 @@ export default function FieldSettings({ field, onUpdate, onClose }) {
           {/* Required Toggle */}
           {!["heading", "paragraph", "divider"].includes(field.type) && (
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Required</label>
+              <div>
+                <label className="text-sm font-medium block" style={{ color: 'var(--text-primary)' }}>Required</label>
+                {field.isDeletable === false && (
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>This field must be required</p>
+                )}
+              </div>
               <button
-                onClick={() => onUpdate({ required: !field.required })}
-                className={`w-11 h-6 rounded-full transition-colors relative ${field.required ? 'bg-[#8624F0]' : 'bg-gray-200 dark:bg-gray-600'}`}
+                onClick={() => {
+                  if (field.isDeletable !== false) {
+                    onUpdate({ required: !field.required });
+                  }
+                }}
+                disabled={field.isDeletable === false}
+                className={`w-11 h-6 rounded-full transition-colors relative ${field.required ? 'bg-[#8624F0]' : 'bg-gray-200 dark:bg-gray-600'} ${field.isDeletable === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${field.required ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                <span className={`absolute left-0 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${field.required ? 'translate-x-5' : 'translate-x-0.5'}`} />
               </button>
             </div>
           )}

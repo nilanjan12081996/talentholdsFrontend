@@ -727,6 +727,23 @@ function LiveFieldInput({ field, register }) {
                 />
             );
             
+        case 6: // Dropdown
+            return (
+                <select
+                    className={inputClass}
+                    {...register(fieldName, validationRules)}
+                >
+                    <option value="" disabled selected hidden>
+                        {field.placeholder || "Select an option..."}
+                    </option>
+                    {field.options?.map((opt, i) => (
+                        <option key={i} value={opt.optionLabel}>
+                            {opt.optionLabel}
+                        </option>
+                    ))}
+                </select>
+            );
+            
         case 7: 
             return (
                 <div className="space-y-3">
@@ -759,6 +776,21 @@ function LiveFieldInput({ field, register }) {
                         </label>
                     ))}
                 </div>
+            );
+            
+        case 9: // Multi-select
+            return (
+                <select
+                    multiple
+                    className={`${inputClass} min-h-[100px]`}
+                    {...register(fieldName, validationRules)}
+                >
+                    {field.options?.map((opt, i) => (
+                        <option key={i} value={opt.optionLabel} className="p-2 hover:bg-gray-100 cursor-pointer">
+                            {opt.optionLabel}
+                        </option>
+                    ))}
+                </select>
             );
             
         case 10: 

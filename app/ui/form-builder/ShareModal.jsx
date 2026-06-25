@@ -176,12 +176,24 @@
 'use client';
 
 import { useState, useRef } from "react";
-import { Copy, QrCode, Code, X } from "lucide-react";
+import { Copy, QrCode, Code, X, Eye, EyeOff, Check } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react"; // 1. Import the QR code component
 
-export default function ShareModal({ formLink, isOpen, onClose }) {
+export default function ShareModal({ 
+  formLink, 
+  isOpen, 
+  onClose,
+  requirePassword,
+  setRequirePassword,
+  password,
+  setPassword,
+  closeForm,
+  setCloseForm
+}) {
   const [activeTab, setActiveTab] = useState("link");
-  const qrRef = useRef(null); // 2. Create a ref to select the QR canvas for downloading
+  const [showPassword, setShowPassword] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const qrRef = useRef(null); // Create a ref to select the QR canvas for downloading
 
   // Safely get the frontend base URL
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://yourapp.com';
@@ -191,9 +203,10 @@ export default function ShareModal({ formLink, isOpen, onClose }) {
   
   const embedCode = `<iframe src="${formUrl}" width="100%" height="600" frameborder="0"></iframe>`;
 
-  const copyToClipboard = (text, message) => {
+  const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert(message);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   // 3. Add function to download the QR code as an image
@@ -234,7 +247,7 @@ export default function ShareModal({ formLink, isOpen, onClose }) {
 
         {/* Tabs */}
         <div className="flex gap-1 p-1 rounded-[10px] mb-6" style={{ background: 'var(--bg-main)' }}>
-          {["link", "embed", "qr"].map((tab) => (
+          {["link", "qr"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -250,6 +263,7 @@ export default function ShareModal({ formLink, isOpen, onClose }) {
           ))}
         </div>
 
+        <div className="min-h-[380px] flex flex-col">
         {/* Tab: Link */}
         {activeTab === "link" && (
           <div className="space-y-4">
@@ -263,10 +277,18 @@ export default function ShareModal({ formLink, isOpen, onClose }) {
                   style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                 />
                 <button
-                  onClick={() => copyToClipboard(formUrl, "Link copied!")}
-                  className="px-4 bg-[#8624F0] text-white rounded-[8px] text-sm font-medium flex items-center gap-2 hover:bg-[#6c1dc0] transition-colors"
+                  onClick={() => copyToClipboard(formUrl)}
+                  className="px-4 bg-[#8624F0] text-white rounded-[8px] text-sm font-medium flex items-center gap-2 hover:bg-[#6c1dc0] transition-colors w-[90px] justify-center"
                 >
-                  <Copy className="w-4 h-4" /> Copy
+                  {isCopied ? (
+                    <>
+                      <Check className="w-4 h-4" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" /> Copy
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -277,64 +299,79 @@ export default function ShareModal({ formLink, isOpen, onClose }) {
                   <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Password Protection</p>
                   <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Require a password to access this form</p>
                 </div>
-                <div className="w-11 h-6 rounded-full cursor-pointer" style={{ background: 'var(--border-color)' }} />
+                <div 
+                  onClick={() => setRequirePassword(!requirePassword)}
+                  className={`w-11 h-6 rounded-full cursor-pointer relative transition-colors ${requirePassword ? 'bg-[#8624F0]' : 'bg-[var(--border-color)]'}`}
+                >
+                  <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${requirePassword ? 'translate-x-5' : ''}`} />
+                </div>
               </div>
-              <div className="flex items-center justify-between">
+              
+              {requirePassword && (
+                <div className="pt-3 border-t animate-in fade-in slide-in-from-top-2" style={{ borderColor: 'var(--border-color)' }}>
+                  <label className="text-sm font-medium mb-2 block" style={{ color: 'var(--text-primary)' }}>Set Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full h-[40px] pl-3 pr-10 rounded-[8px] text-sm outline-none focus:ring-2 focus:ring-[#8624F0]/30"
+                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                      placeholder="Enter a secure password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-1">
                 <div>
                   <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Close Form</p>
                   <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Stop accepting new responses</p>
                 </div>
-                <div className="w-11 h-6 rounded-full cursor-pointer" style={{ background: 'var(--border-color)' }} />
-              </div>
-            </div>
-
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-[10px] p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-green-900 dark:text-green-300 text-sm">Form is live!</p>
-                  <p className="text-xs text-green-700 dark:text-green-400 mt-1">Your form is now accepting responses at the URL above</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab: Embed */}
-        {activeTab === "embed" && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Embed Code</label>
-              <div className="relative">
-                <textarea
-                  value={embedCode}
-                  readOnly
-                  rows={4}
-                  className="w-full px-3 py-2 rounded-[8px] font-mono text-xs outline-none pr-12 resize-none"
-                  style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-                />
-                <button
-                  onClick={() => copyToClipboard(embedCode, "Embed code copied!")}
-                  className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#8624F0]/10 transition-colors"
+                <div 
+                  onClick={() => setCloseForm(!closeForm)}
+                  className={`w-11 h-6 rounded-full cursor-pointer relative transition-colors ${closeForm ? 'bg-[#8624F0]' : 'bg-[var(--border-color)]'}`}
                 >
-                  <Copy className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-[10px]">
-              <div className="flex gap-3">
-                <Code className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-blue-900 dark:text-blue-300 text-sm">How to embed</p>
-                  <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">Copy the code above and paste it into your website's HTML</p>
+                  <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${closeForm ? 'translate-x-5' : ''}`} />
                 </div>
               </div>
             </div>
+
+            {closeForm ? (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-[10px] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <X className="w-3 h-3 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-red-900 dark:text-red-300 text-sm">Form is closed!</p>
+                    <p className="text-xs text-red-700 dark:text-red-400 mt-1">This form is currently not accepting any responses.</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-[10px] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-green-900 dark:text-green-300 text-sm">Form is live!</p>
+                    <p className="text-xs text-green-700 dark:text-green-400 mt-1">Your form is now accepting responses at the URL above</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -369,6 +406,7 @@ export default function ShareModal({ formLink, isOpen, onClose }) {
             </div>
           </div>
         )}
+        </div>
 
         {/* Footer */}
         <div className="flex justify-end mt-6 pt-4" style={{ borderTop: '1px solid var(--border-color)' }}>

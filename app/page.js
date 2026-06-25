@@ -303,39 +303,49 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {pricingPlans.map((plan, index) => (
-              <div key={index} className={`relative rounded-2xl p-6 border ${plan.active ? 'border-[#8645FF] shadow-xl scale-105 z-10 bg-[#181059]' : 'border-gray-200 bg-white'} transition-transform`}>
-                {plan.active && (
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#761ED3] text-white text-xs font-bold px-3 py-1 rounded-full">
-                    MOST POPULAR
+            {(plans?.data?.length > 0 ? plans.data : []).map((plan, index) => {
+              const isActive = plan.name.toLowerCase() === 'team' || plan.name.toLowerCase() === 'pro';
+              
+              const features = [
+                plan.planAccess?.maxJobApplicationLinks === -1 ? 'Unlimited Active Jobs' : `${plan.planAccess?.maxJobApplicationLinks} Active Jobs`,
+                plan.planAccess?.maxHiringTeamMembers === -1 ? 'Unlimited Users' : `${plan.planAccess?.maxHiringTeamMembers} Users`,
+                plan.planAccess?.candidateDashboard ? 'Candidate Dashboard' : null,
+                plan.planAccess?.resumeStorageGb === -1 ? 'Unlimited Storage' : `${plan.planAccess?.resumeStorageGb}GB Resume Storage`,
+                plan.planAccess?.maxEmails === -1 ? 'Unlimited Emails' : `${plan.planAccess?.maxEmails} Emails`,
+                plan.planAccess?.chromeExtension ? 'Chrome Extension' : null
+              ].filter(Boolean);
+
+              return (
+                <div key={plan.id || index} className={`relative rounded-2xl p-6 border ${isActive ? 'border-[#8645FF] shadow-xl scale-105 z-10 bg-[#181059]' : 'border-gray-200 bg-white'} transition-transform flex flex-col`}>
+                  {isActive && (
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#761ED3] text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                      MOST POPULAR
+                    </div>
+                  )}
+                  <h3 className={`text-lg font-bold mb-2 ${isActive ? 'text-[#ffffff]' : 'text-[#1E1E4B]'}`}>{plan.name}</h3>
+                  <div className="flex items-baseline mb-6">
+                    <span className={`text-3xl font-bold text-[#1E1E4B] ${isActive ? 'text-[#ffffff]' : 'text-[#1E1E4B]'}`}>${plan.price}</span>
+                    <span className={`text-gray-500 text-sm ${isActive ? 'text-[#ffffff]' : 'text-[#1E1E4B]'}`}>/{plan.billingCycle}</span>
                   </div>
-                )}
-                <h3 className={`text-lg font-bold mb-2 ${plan.active ? 'text-[#ffffff]' : 'text-[#1E1E4B]'}`}>{plan.name}</h3>
-                <div className="flex items-baseline mb-6">
-                  <span className={`text-3xl font-bold text-[#1E1E4B] ${plan.active ? 'text-[#ffffff]' : 'text-[#1E1E4B]'}`}>{plan.price}</span>
-                  <span className={`text-gray-500 text-sm ${plan.active ? 'text-[#ffffff]' : 'text-[#1E1E4B]'}`}>{plan.period}</span>
+
+                  <ul className="space-y-3 mb-8 flex-1">
+                    {features.map((feature, i) => (
+                      <li key={i} className={`flex items-start gap-2 text-sm ${isActive ? 'text-[#ffffff]' : 'text-gray-600'}`}>
+                        <CheckIcon className="w-4 h-4 mt-0.5 text-[#8624f0] shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button 
+                    onClick={() => router.push('/signup')}
+                    className={`w-full py-2.5 rounded-lg font-bold transition-colors text-sm mt-auto cursor-pointer ${isActive ? 'text-white bg-[#761ED3] hover:bg-[#8e2dd1]' : 'text-[#761ED3] bg-purple-50 hover:bg-purple-100'}`}
+                  >
+                    Get Started
+                  </button>
                 </div>
-
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className={`flex items-center gap-2 text-sm ${plan.active ? 'text-[#ffffff]' : 'text-gray-600'}`}>
-                      <CheckIcon className="w-4 h-4 text-[#8624f0]" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                {plan.active ?
-                  <button className={`w-full py-2.5 rounded-lg font-medium transition-colors text-sm ${plan.buttonColor}`}>
-                    Try 1 month
-                  </button>
-                  :
-                  <button className={`w-full py-2.5 rounded-lg font-medium transition-colors text-sm ${plan.buttonColor}`}>
-                    Choose
-                  </button>
-                }
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

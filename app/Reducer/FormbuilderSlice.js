@@ -153,10 +153,10 @@ export const uploadVideoForm = createAsyncThunk(
 
 export const allFormList = createAsyncThunk(
     'auth/allFormList',
-    async ({id}, { rejectWithValue }) => {
+    async ({id, page = 0, size = 10}, { rejectWithValue }) => {
 
         try {
-            const response = await api.get(`/form/get?workspaceid=${id}`);
+            const response = await api.get(`/form/get?workspaceid=${id}&page=${page}&size=${size}`);
             if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
                 return response.data;
             } else {
@@ -192,6 +192,22 @@ export const updateForm = createAsyncThunk(
     async (payload, { rejectWithValue }) => {
         try {
             const response = await api.post('/form/add/update', payload);
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+)
+
+export const deleteFormField = createAsyncThunk(
+    'deleteFormField',
+    async (fieldId, { rejectWithValue }) => {
+        try {
+            const response = await api.delete(`/form/field/${fieldId}`);
             if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {

@@ -6,13 +6,15 @@ import loginLogo from "../../assets/imagesource/login_logo.png";
 import { Label, TextInput } from 'flowbite-react';
 import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
-import { login, registration, workspaceList, sendOtp } from '../Reducer/AuthSlice';
+import { login, registration, sendOtp, resendOtp } from '../Reducer/AuthSlice';
+import { workspaceList } from '../Reducer/WorkspaceSlice';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
+import { ArrowLeft } from 'lucide-react';
 
 export default function Login() {
-  const { workspaceData } = useSelector((state) => state?.auth)
+  const { workspaceData } = useSelector((state) => state?.workspace)
   const router = useRouter();
   const [userId, setUserId] = useState()
   const [showPassword, setShowPassword] = useState(false);
@@ -161,7 +163,11 @@ export default function Login() {
   console.log("workspaceList", workspaceData);
 
   return (
-    <div className="min-h-screen bg-[#faf4fe] flex items-center justify-center p-4 font-sans">
+    <div className="relative min-h-screen bg-[#faf4fe] flex items-center justify-center p-4 font-sans">
+      <Link href="/" className="absolute top-6 left-6 md:top-10 md:left-10 text-[#545454] hover:text-[#761ed3] flex items-center gap-2 font-medium transition-colors z-10">
+        <ArrowLeft size={20} />
+        Back to Home
+      </Link>
       <div className="bg-white rounded-[14px] shadow-sm w-full max-w-[585px] p-8 md:p-12 flex flex-col">
 
         {/* Logo */}
