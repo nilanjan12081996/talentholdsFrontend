@@ -1,22 +1,67 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getPlans } from '../Reducer/PlanSlice';
+import { getPlans, createSubscription, verifyPayment, getCurrentSubscription } from '../Reducer/PlanSlice';
 import { Check } from 'lucide-react';
+import { useRazorpay } from '../hooks/useRazorpay';
+import { toast } from 'react-toastify';
 
 export default function PlansPage() {
   const dispatch = useDispatch();
-  const { plans } = useSelector((state) => state.plan);
+  const { plans, currentSubscription } = useSelector((state) => state.plan);
+  const { initializePayment } = useRazorpay();
+  const [loadingPlan, setLoadingPlan] = useState(null);
 
   useEffect(() => {
     dispatch(getPlans());
+    dispatch(getCurrentSubscription());
   }, [dispatch]);
 
-  const handleBuyNow = (plan) => {
-    // Razorpay integration will go here
-    console.log('Open Razorpay for plan:', plan.name);
-    // alert('Razorpay integration pending. Client will add later.');
+  const handleBuyNow = async (plan) => {
+    setLoadingPlan(plan.id);
+    try {
+      // 1. Create Subscription on Backend
+      const response = await dispatch(createSubscription({ planId: plan.id })).unwrap();
+      
+      // 2. Initialize Razorpay Modal
+      if (response?.data?.razorpaySubscriptionId) {
+        initializePayment({
+          subscriptionId: response.data.razorpaySubscriptionId,
+          planName: plan.name,
+          onPaymentSuccess: async (paymentData) => {
+            try {
+              // 3. Verify Payment
+              await dispatch(verifyPayment(paymentData)).unwrap();
+              toast.success('Subscription activated successfully!');
+              dispatch(getPlans()); // Refresh user data/plans
+              dispatch(getCurrentSubscription()); // Refresh active plan
+            } catch (err) {
+              toast.error('Payment verification failed.');
+            }
+          },
+          onPaymentFailure: (error) => {
+             if(error) toast.error(error.description || 'Payment failed.');
+          }
+        });
+      }
+    } catch (error) {
+      toast.error(error?.message || 'Failed to initialize subscription');
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
+  // Check if we have an active subscription, otherwise default to Free (price 0)
+  const isPlanActive = (plan) => {
+    if (currentSubscription && currentSubscription.planId === plan.id) {
+      return true;
+    }
+    // If no active subscription, the free plan ($0) is the current plan
+    if (!currentSubscription && (plan.price === 0 || plan.price === "0")) {
+      return true;
+    }
+    return false;
   };
 
   return (
@@ -31,6 +76,7 @@ export default function PlansPage() {
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto w-full">
         {(plans?.data?.length > 0 ? plans.data : []).map((plan, index) => {
           const isActive = plan.name.toLowerCase() === 'team' || plan.name.toLowerCase() === 'pro';
+          const isCurrentPlan = isPlanActive(plan);
           
           const features = [
             plan.planAccess?.maxJobApplicationLinks === -1 ? 'Unlimited Active Jobs' : `${plan.planAccess?.maxJobApplicationLinks} Active Jobs`,
@@ -63,12 +109,22 @@ export default function PlansPage() {
                 ))}
               </ul>
 
-              <button 
-                onClick={() => handleBuyNow(plan)}
-                className={`w-full py-3 rounded-lg font-bold transition-colors text-sm mt-auto cursor-pointer ${isActive ? 'text-white bg-[#761ED3] hover:bg-[#8e2dd1]' : 'text-[#761ED3] bg-purple-50 hover:bg-purple-100'}`}
-              >
-                Buy Now
-              </button>
+              {isCurrentPlan ? (
+                <button 
+                  disabled
+                  className={`w-full py-3 rounded-lg font-bold transition-colors text-sm mt-auto opacity-50 cursor-not-allowed ${isActive ? 'text-white bg-[#761ED3]' : 'text-[#761ED3] bg-purple-50'}`}
+                >
+                  Current Plan
+                </button>
+              ) : (plan.price === 0 || plan.price === "0" ? null : (
+                <button 
+                  onClick={() => handleBuyNow(plan)}
+                  disabled={loadingPlan === plan.id}
+                  className={`w-full py-3 rounded-lg font-bold transition-colors text-sm mt-auto cursor-pointer ${isActive ? 'text-white bg-[#761ED3] hover:bg-[#8e2dd1]' : 'text-[#761ED3] bg-purple-50 hover:bg-purple-100'} ${loadingPlan === plan.id ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {loadingPlan === plan.id ? 'Processing...' : 'Buy Now'}
+                </button>
+              ))}
             </div>
           );
         })}

@@ -117,10 +117,14 @@ export default function FormBuilderPage() {
         setFormTitle(editFormData.title || "Untitled Form");
         setFormDescription(editFormData.description || "");
 
+        if (editFormData.publicSlug) {
+            setFormLink(editFormData.publicSlug);
+        }
+
         if (Array.isArray(editFormData.fields) && editFormData.fields.length > 0) {
             const mappedFields = editFormData.fields.map((f, idx) => {
                 // Try to derive the UI type from the field type code
-                const uiType = apiCodeToUiType[f.fieldType?.code] || "short-text";
+                const uiType = apiCodeToUiType[f.formFieldType?.code || f.fieldType?.code] || "short-text";
                 const isDefault = f.label === "Full Name" || f.label === "Email Address";
                 return {
                     id: f.id ? `field-api-${f.id}` : `field-idx-${idx}`,
@@ -313,6 +317,8 @@ export default function FormBuilderPage() {
                 // ── EDIT MODE: POST /form/add/update with id in body ──
                 const resultAction = await dispatch(updateForm(payload));
                 if (updateForm.fulfilled.match(resultAction)) {
+                    const generatedLink = resultAction.payload?.link || editFormData?.publicSlug || formLink;
+                    setFormLink(generatedLink);
                     setIsPublished(true);
                     setIsUnsaved(false);
                     toast.success("Form updated successfully!");

@@ -5,20 +5,29 @@ import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { ExternalLink, MoreVertical, Plus, Pencil } from 'lucide-react';
 import { getProfile } from '../Reducer/AuthSlice';
+import { getPlans, getCurrentSubscription, getAllSubscriptions, cancelSubscription } from '../Reducer/PlanSlice';
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
 
 export default function Settings() {
   const dispatch = useDispatch();
   const { profileData, loading } = useSelector((state) => state?.auth);
+  const { plans, currentSubscription, allSubscriptions } = useSelector((state) => state?.plan);
 
-  // Fetch profile on mount
+  // Fetch data on mount
   useEffect(() => {
     dispatch(getProfile());
+    dispatch(getPlans());
+    dispatch(getCurrentSubscription());
+    dispatch(getAllSubscriptions());
   }, [dispatch]);
 
   const profile = profileData?.data || profileData || {};
   const profileName = profile.name || 'Soumalya Chandra';
   const profileEmail = profile.email || 'soumalyachadra76@gmail.com';
   const profileAvatar = profile.avatar || '';
+
+  const currentPlanName = plans?.data?.find(p => p.id === currentSubscription?.planId)?.name;
 
   // Helper to generate initials for avatar placeholder
   const getInitials = (nameString) => {
@@ -38,6 +47,31 @@ export default function Settings() {
     const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const cleanPath = avatarPath.startsWith('/') ? avatarPath : `/${avatarPath}`;
     return `${cleanBase}${cleanPath}`;
+  };
+
+  const handleCancelSubscription = () => {
+    if (!currentSubscription?.id) return;
+    
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this! Your premium features will be revoked.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, cancel it!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await dispatch(cancelSubscription(currentSubscription.id)).unwrap();
+          toast.success('Subscription cancelled successfully.');
+          dispatch(getCurrentSubscription());
+          dispatch(getAllSubscriptions());
+        } catch (error) {
+          toast.error(error?.message || 'Failed to cancel subscription');
+        }
+      }
+    });
   };
 
   return (
@@ -137,12 +171,32 @@ export default function Settings() {
           </div>
 
           <div className="grid grid-cols-[1fr] md:grid-cols-[150px_1fr] gap-4 md:gap-8 items-center py-8">
-            <label className="font-semibold" style={{ color: 'var(--text-primary)' }}>Plan</label>
+            <label className="font-semibold" style={{ color: 'var(--text-primary)' }}>Current Plan</label>
             <div className="flex justify-end items-center gap-6">
-              <span className="font-semibold" style={{ color: 'var(--text-secondary)' }}>Free</span>
-              <button className="h-[50px] px-6 border border-[#761ed3] text-[#8624F0] font-semibold rounded-[8px] hover:bg-[#761ed3]/5 transition-colors">
-                Upgrade
-              </button>
+              <div className="flex flex-col items-end">
+                <span className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                  {currentSubscription ? currentPlanName : 'Free'}
+                </span>
+                {currentSubscription && (
+                  <span className="text-xs text-green-500 font-medium">Active (Expires: {new Date(currentSubscription.endDate).toLocaleDateString()})</span>
+                )}
+              </div>
+              
+              <div className="flex gap-3">
+                {currentSubscription && currentSubscription.status === 'active' && (
+                  <button 
+                    onClick={handleCancelSubscription}
+                    className="h-[50px] px-6 border border-red-500 text-red-500 font-semibold rounded-[8px] hover:bg-red-50 transition-colors"
+                  >
+                    Cancel Plan
+                  </button>
+                )}
+                <Link href="/plans">
+                  <button className="h-[50px] px-6 bg-[#761ed3] text-white font-semibold rounded-[8px] hover:bg-[#8e2dd1] transition-colors">
+                    Upgrade
+                  </button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -184,6 +238,7 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

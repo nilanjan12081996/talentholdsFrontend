@@ -176,7 +176,7 @@
 'use client';
 
 import { useState, useRef } from "react";
-import { Copy, QrCode, Code, X, Eye, EyeOff, Check } from "lucide-react";
+import { Copy, QrCode, Code, X, Eye, EyeOff, Check, Share2 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react"; // 1. Import the QR code component
 
 export default function ShareModal({ 
@@ -224,6 +224,43 @@ export default function ShareModal({
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
+    }
+  };
+
+  const shareQRAndLink = async () => {
+    if (!formUrl) return;
+
+    const shareData = {
+      title: "Fill out my form!",
+      text: "Hello! Please scan the attached QR code or click the link below to fill out my form:\\n",
+      url: formUrl,
+    };
+
+    try {
+      let shared = false;
+      
+      if (qrRef.current) {
+        const canvas = qrRef.current.querySelector('canvas');
+        if (canvas) {
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+          if (blob) {
+            const file = new File([blob], 'form-qr-code.png', { type: 'image/png' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                ...shareData,
+                files: [file]
+              });
+              shared = true;
+            }
+          }
+        }
+      }
+
+      if (!shared && navigator.share) {
+        await navigator.share(shareData);
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
     }
   };
 
@@ -392,13 +429,22 @@ export default function ShareModal({
               <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>QR Code for your form</p>
               
               {/* 5. Hook up the download function */}
-              <button 
-                onClick={downloadQRCode}
-                disabled={!formUrl}
-                className="px-6 py-2.5 bg-[#210043] dark:bg-[#6d28d9] text-white rounded-[8px] font-medium text-sm hover:bg-[#340b61] dark:hover:bg-[#7c3aed] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Download QR Code
-              </button>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={downloadQRCode}
+                  disabled={!formUrl}
+                  className="px-6 py-2.5 bg-[#210043] dark:bg-[#6d28d9] text-white rounded-[8px] font-medium text-sm hover:bg-[#340b61] dark:hover:bg-[#7c3aed] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Download
+                </button>
+                <button 
+                  onClick={shareQRAndLink}
+                  disabled={!formUrl}
+                  className="px-6 py-2.5 flex items-center gap-2 bg-[#8624F0] text-white rounded-[8px] font-medium text-sm hover:bg-[#6c1dc0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Share2 className="w-4 h-4" /> Share
+                </button>
+              </div>
             </div>
             
             <div className="p-4 rounded-[10px]" style={{ background: 'var(--bg-main)' }}>

@@ -160,14 +160,22 @@ export default function Forms() {
                     </p>
                   </div>
 
-                  <div className="flex justify-between text-xs font-bold mb-6 shrink-0" style={{ color: 'var(--text-primary)' }}>
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-xs font-bold mb-6 shrink-0" style={{ color: 'var(--text-primary)' }}>
                     <div>
                       <span className="font-normal block mb-1" style={{ color: 'var(--text-secondary)' }}>Fields</span>
                       {form.fields?.length || 0}
                     </div>
                     <div>
-                      <span className="font-normal block mb-1" style={{ color: 'var(--text-secondary)' }}>Created</span>
+                      <span className="font-normal block mb-1" style={{ color: 'var(--text-secondary)' }}>Responses</span>
+                      {form.responseCount || 0}
+                    </div>
+                    <div>
+                      <span className="font-normal block mb-1" style={{ color: 'var(--text-secondary)' }}>Created On</span>
                       {form.createdAt ? new Date(form.createdAt).toLocaleDateString() : 'N/A'}
+                    </div>
+                    <div>
+                      <span className="font-normal block mb-1" style={{ color: 'var(--text-secondary)' }}>Last Modified</span>
+                      {form.updatedAt ? new Date(form.updatedAt).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
 

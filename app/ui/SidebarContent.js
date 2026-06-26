@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutGrid, FileText, Users, Inbox, Settings, Briefcase, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
+import { LayoutGrid, FileText, Users, Inbox, Settings, Briefcase, ChevronLeft, ChevronRight, CreditCard, History } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
@@ -15,6 +15,7 @@ export default function SidebarContent({ onLinkClick, isExpanded = true, setIsEx
     { name: 'Candidates', icon: Users, path: '/candidates' },
     { name: 'Inbox', icon: Inbox, path: '/inbox' },
     { name: 'Plans', icon: CreditCard, path: '/plans' },
+    { name: 'Transactions', icon: History, path: '/transactions' },
     { name: 'Settings', icon: Settings, path: '/settings' },
   ];
 
@@ -80,16 +81,7 @@ export default function SidebarContent({ onLinkClick, isExpanded = true, setIsEx
         })}
       </div>
 
-      <div className={`mt-auto shrink-0 transition-all duration-300 ${isExpanded ? 'p-8 opacity-100' : 'h-0 p-0 opacity-0 overflow-hidden'}`}>
-        <Link href="/plans" onClick={onLinkClick} className="block relative rounded-[24px] p-6 text-center overflow-hidden bg-gradient-to-br from-[#A676FF] to-[#8624F0] shadow-lg hover:shadow-xl transition-all hover:scale-105">
-          <div className="absolute -top-12 -left-12 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-          <div className="w-[60px] h-[60px] mx-auto bg-white/20 rounded-full flex items-center justify-center mb-3 border-[4px] border-white/30 backdrop-blur-sm relative z-10">
-            <div className="w-8 h-8 bg-gradient-to-b from-white to-white/50 rounded-full" />
-          </div>
-          <h3 className="text-white font-bold text-lg mb-1 relative z-10 whitespace-nowrap">Upgrade to PRO</h3>
-          <p className="text-[#e9edf7] text-sm font-medium leading-tight relative z-10">to get access to all premium features!</p>
-        </Link>
-      </div>
+
     </>
   );
 }

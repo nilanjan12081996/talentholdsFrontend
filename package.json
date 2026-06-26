@@ -28,7 +28,8 @@
     "react-tabs": "^6.1.0",
     "react-toastify": "^11.0.5",
     "slick-carousel": "^1.8.1",
-    "sockjs-client": "^1.6.1"
+    "sockjs-client": "^1.6.1",
+    "sweetalert2": "^11.26.25"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
