@@ -121,6 +121,16 @@ export default function FormBuilderPage() {
             setFormLink(editFormData.publicSlug);
         }
 
+        if (editFormData.password) {
+            setPassword(editFormData.password);
+            setRequirePassword(true);
+        } else {
+            setPassword("");
+            setRequirePassword(false);
+        }
+        
+        setCloseForm(!!editFormData.isClosed);
+
         if (Array.isArray(editFormData.fields) && editFormData.fields.length > 0) {
             const mappedFields = editFormData.fields.map((f, idx) => {
                 // Try to derive the UI type from the field type code
@@ -302,7 +312,9 @@ export default function FormBuilderPage() {
             title: formTitle,
             description: formDescription,
             workspaceId: parseInt(workspaceId, 10),
-            fields: formattedFields
+            fields: formattedFields,
+            password: requirePassword ? password : null,
+            isClosed: closeForm
         };
 
         // For update: include the form id at the root level
@@ -322,6 +334,8 @@ export default function FormBuilderPage() {
                     setIsPublished(true);
                     setIsUnsaved(false);
                     toast.success("Form updated successfully!");
+                    // Refetch the form to get the latest generated IDs for fields and options
+                    dispatch(getFormById(formId));
                 } else {
                     toast.error("Failed to update form: " + (resultAction.payload?.message || "Unknown error"));
                 }
@@ -330,11 +344,15 @@ export default function FormBuilderPage() {
                 const resultAction = await dispatch(createForm(payload));
                 if (createForm.fulfilled.match(resultAction)) {
                     const generatedLink = resultAction.payload?.link;
+                    const newFormId = resultAction.payload?.formId;
                     setFormLink(generatedLink);
                     setIsPublished(true);
                     setIsUnsaved(false);
-                    // Share modal will not open automatically, user can click "Share" button
                     toast.success("Form created successfully!");
+                    
+                    if (newFormId) {
+                        router.replace(`/forms/builder?formId=${newFormId}&workspaceId=${workspaceId}`);
+                    }
                 } else {
                     toast.error("Failed to create form: " + (resultAction.payload?.message || "Unknown error"));
                 }
@@ -526,6 +544,8 @@ export default function FormBuilderPage() {
                 setPassword={setPassword}
                 closeForm={closeForm}
                 setCloseForm={setCloseForm}
+                onSave={handlePublish}
+                markUnsaved={() => setIsUnsaved(true)}
             />
 
             <SettingsModal
@@ -537,6 +557,8 @@ export default function FormBuilderPage() {
                 setPassword={setPassword}
                 closeForm={closeForm}
                 setCloseForm={setCloseForm}
+                onSave={handlePublish}
+                markUnsaved={() => setIsUnsaved(true)}
             />
 
             <DeleteConfirmModal

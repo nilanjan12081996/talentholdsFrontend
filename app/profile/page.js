@@ -12,7 +12,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  Building2
 } from 'lucide-react';
 import { getProfile, updateProfile, uploadAvatar } from '../Reducer/AuthSlice';
 
@@ -228,7 +229,7 @@ export default function Profile() {
 
               {/* Upload Input & Details */}
               <div className="text-center sm:text-left space-y-1.5">
-                <h4 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Profile Image</h4>
+                <h4 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Company Logo</h4>
                 <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Supports JPG, PNG or WEBP formats. Max size 2MB.</p>
                 <button
                   type="button"
@@ -256,7 +257,7 @@ export default function Profile() {
                 {/* Name Input */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                    <User size={16} className="text-[#8624F0]" /> Full Name / Organization
+                    <Building2 size={16} className="text-[#8624F0]" /> Company / Organization Name
                   </label>
                   <input
                     type="text"

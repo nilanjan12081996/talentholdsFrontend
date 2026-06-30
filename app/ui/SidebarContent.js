@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutGrid, FileText, Users, Inbox, Settings, Briefcase, ChevronLeft, ChevronRight, CreditCard, History } from 'lucide-react';
+import { LayoutGrid, FileText, Users, Inbox, Briefcase, ChevronLeft, ChevronRight, CreditCard, History } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
@@ -16,7 +16,6 @@ export default function SidebarContent({ onLinkClick, isExpanded = true, setIsEx
     { name: 'Inbox', icon: Inbox, path: '/inbox' },
     { name: 'Plans', icon: CreditCard, path: '/plans' },
     { name: 'Transactions', icon: History, path: '/transactions' },
-    { name: 'Settings', icon: Settings, path: '/settings' },
   ];
 
   return (

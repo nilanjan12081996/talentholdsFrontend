@@ -448,7 +448,8 @@ export default function Candidates() {
           formTitle: form.title, // Grab the title from the parent form object
           formId: form.id,               // <--- ADD THIS
           workspaceId: form.workspaceId, // <--- ADD THIS
-          currentStage: stageOverrides[sub.id] || (sub.currentStageId ? `Stage ${sub.currentStageId}` : "Applied"),
+          currentStageId: sub.currentStageId,
+          currentStage: stageOverrides[sub.id] || (stages?.find(s => s.id === sub.currentStageId)?.name || (sub.currentStageId ? `Stage ${sub.currentStageId}` : "Applied")),
           rawCandidateData: sub.candidate, // Keep the raw data just in case
           answers: sub.formSubmissionAnswerDto || [],
           fields: form.fields || []
@@ -776,18 +777,18 @@ export default function Candidates() {
                 <>
                 <div className="poptop flex justify-between items-center pb-8 mb-8" style={{ borderBottom: '1px solid var(--border-color)' }}>
             
-                <div className="poptop_wrap flex items-center gap-3">
-                  <div className="bg-[#8734FB] w-[58px] h-[58px] rounded-full flex justify-center items-center">
-                    <p className="text-white text-[16px] font-medium">
-                      {(selectedCandidate?.fullName || "C").substring(0, 2).toUpperCase()}
-                    </p>
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-[20px] leading-[24px] font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {selectedCandidate?.fullName}
+                <div className="poptop_wrap flex flex-col gap-2 text-left">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-[22px] leading-[28px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {selectedCandidate?.formTitle || "Application Form"}
                     </h3>
-                    <p className="text-[15px]" style={{ color: 'var(--text-secondary)' }}>Candidate</p>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStageColor(stageOverrides[selectedCandidate?.submissionId] || selectedCandidate?.currentStage)}`}>
+                      {stageOverrides[selectedCandidate?.submissionId] || selectedCandidate?.currentStage || 'Applied'}
+                    </span>
                   </div>
+                  <p className="text-[14px]" style={{ color: 'var(--text-secondary)' }}>
+                    Applied: {selectedCandidate?.submittedAt ? new Date(selectedCandidate.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button className="w-[45px] h-[45px] bg-[#8624F0] rounded-[14px] flex justify-center items-center cursor-pointer">
@@ -798,86 +799,115 @@ export default function Candidates() {
                   className="w-[45px] h-[45px] bg-[#AAAAAA] rounded-[14px] flex justify-center items-center cursor-pointer hover:bg-[#8624F0] transition-colors">
                     <AiOutlineMessage className="text-[20px] text-white" />
                   </button>
-                  <button className="w-[45px] h-[45px] bg-[#AAAAAA] rounded-[14px] flex justify-center items-center cursor-pointer hover:bg-[#8624F0] transition-colors">
-                    <BiCommentCheck className="text-[20px] text-white" />
-                  </button>
                 </div>
               </div>
                 
                  <div className="popmid">
-                   <div className="grid grid-cols-2 gap-4 mb-6">
-                     <div className="flex items-center gap-4">
-                       <AiOutlineMail className="text-[#ADADAD] text-[24px]" />
-                       <div className="text-left">
-                         <h3 className="text-[12px] leading-[16px]" style={{ color: 'var(--text-secondary)' }}>Email</h3>
-                         <p className="text-[17px]" style={{ color: 'var(--text-primary)' }}>{selectedCandidate?.email}</p>
-                       </div>
-                     </div>
-                     <div className="flex items-center gap-4">
-                       <BsTelephone className="text-[#ADADAD] text-[24px]" />
-                       <div className="text-left">
-                         <h3 className="text-[12px] leading-[16px]" style={{ color: 'var(--text-secondary)' }}>Phone</h3>
-                         <p className="text-[17px]" style={{ color: 'var(--text-primary)' }}>N/A</p>
-                       </div>
-                     </div>
-                     <div className="flex items-center gap-4">
-                       <BiMap className="text-[#ADADAD] text-[24px]" />
-                       <div className="text-left">
-                         <h3 className="text-[12px] leading-[16px]" style={{ color: 'var(--text-secondary)' }}>Location</h3>
-                         <p className="text-[17px]" style={{ color: 'var(--text-primary)' }}>N/A</p>
-                       </div>
-                     </div>
-                     <div className="flex items-center gap-4">
-                       <AiOutlineCalendar className="text-[#ADADAD] text-[24px]" />
-                       <div className="text-left">
-                         <h3 className="text-[12px] leading-[16px]" style={{ color: 'var(--text-secondary)' }}>Applied</h3>
-                         <p className="text-[17px]" style={{ color: 'var(--text-primary)' }}>
-                            {selectedCandidate?.submittedAt ? new Date(selectedCandidate.submittedAt).toLocaleDateString() : 'N/A'}
-                         </p>
-                       </div>
-                     </div>
-                   </div>
-
-                   <div className="mb-10">
-                     <div className="grid grid-cols-3 gap-4 mb-4">
-                       <div className="border-[#DCBCFF] border bg-[#F7EFFF] dark:bg-[#2d1a4d] dark:border-[#4a2d6b] p-4 text-left rounded-[10px]">
-                         <h3 className="text-[#9A58E2] text-[12px] pb-1">Current Stage</h3>
-                         <p className="text-[#660EC4] dark:text-[#c084fc] text-[18px] font-semibold">{selectedCandidate?.currentStage}</p>
-                       </div>
-                       <div className="border-[#FFE6B8] border bg-[#FFEFD2] dark:bg-[#3d2e1a] dark:border-[#6b4a1a] p-4 text-left rounded-[10px]">
-                         <h3 className="text-[#767600] dark:text-[#fbbf24] text-[12px] pb-1">Source</h3>
-                         <p className="text-[#695C0D] dark:text-[#fbbf24] text-[18px] font-semibold">Form</p>
-                       </div>
-                       <div className="p-4 text-left rounded-[10px]" style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)' }}>
-                         <h3 className="text-[12px] pb-1" style={{ color: 'var(--text-secondary)' }}>Form Name</h3>
-                         <p className="text-[18px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{selectedCandidate?.formTitle}</p>
-                       </div>
-                     </div>
-                   </div>
-
                    <div className="mb-10">
                      <h3 className="text-[18px] font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Form Responses</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="flex flex-col gap-4">
                        {selectedCandidate?.fields && selectedCandidate.fields.length > 0 ? (
-                         selectedCandidate.fields.map((field) => {
-                           const answer = selectedCandidate?.answers?.find(a => a.fieldId === field.id);
-                           if (!answer) return null;
+                         [...selectedCandidate.fields].sort((a, b) => a.id - b.id).map((field) => {
+                           let answer = selectedCandidate?.answers?.find(a => a.fieldId === field.id);
+                           const fieldType = (field.formFieldType?.typeKey || field.formFieldType?.typeName || field.type || '').toLowerCase();
                            
-                           let valueDisplay = answer.textValue || answer.numberValue || answer.dateValue;
-                           if (field.type === 'file' || field.type === 'image' || field.type === 'pdf') {
-                             valueDisplay = answer.imageUrl ? <a href={answer.imageUrl} target="_blank" rel="noopener noreferrer" className="text-[#8624F0] underline">View File</a> : 'N/A';
-                           } else if (field.type === 'video') {
-                             valueDisplay = answer.videoUrl ? <a href={answer.videoUrl} target="_blank" rel="noopener noreferrer" className="text-[#8624F0] underline">Watch Video</a> : 'N/A';
-                           } else if (!valueDisplay) {
-                             valueDisplay = 'N/A';
+                           const isFullName = fieldType.includes('name') || (field.label || '').toLowerCase().includes('name');
+                           const isEmail = fieldType.includes('email') || (field.label || '').toLowerCase().includes('email');
+
+                           if (!answer) {
+                             if (isFullName && (selectedCandidate?.fullName || selectedCandidate?.name)) {
+                               answer = { textValue: selectedCandidate.fullName || selectedCandidate.name };
+                             } else if (isEmail && selectedCandidate?.email) {
+                               answer = { textValue: selectedCandidate.email };
+                             } else {
+                               return null;
+                             }
+                           }
+
+                           let valueDisplay = answer.textValue || answer.numberValue || answer.dateValue || '';
+
+                           // Render different form elements based on type
+                           let fieldElement = null;
+
+                           if (fieldType === 'long-text' || fieldType === 'textarea') {
+                             fieldElement = (
+                               <textarea 
+                                 readOnly 
+                                 value={valueDisplay} 
+                                 className="w-full px-4 py-3 border rounded-md outline-none min-h-[100px] resize-none text-[14px]"
+                                 style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
+                               />
+                             );
+                           } else if (fieldType === 'file' || fieldType === 'image' || fieldType === 'pdf') {
+                             fieldElement = (
+                               <div className="w-full px-4 py-6 border-2 border-dashed rounded-md flex flex-col items-center justify-center gap-2" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)' }}>
+                                 {answer.imageUrl ? (
+                                   <>
+                                      <div className="w-10 h-10 rounded-full bg-[#8624F0]/10 flex items-center justify-center text-[#8624F0]">
+                                        <CgFileDocument size={20} />
+                                      </div>
+                                      <a href={answer.imageUrl} target="_blank" rel="noopener noreferrer" className="text-[#8624F0] hover:underline font-medium text-[14px]">View Uploaded File</a>
+                                   </>
+                                 ) : (
+                                   <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>No file uploaded</span>
+                                 )}
+                               </div>
+                             );
+                           } else if (fieldType === 'video') {
+                             fieldElement = (
+                               <div className="w-full px-4 py-6 border-2 border-dashed rounded-md flex flex-col items-center justify-center gap-2" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)' }}>
+                                 {answer.videoUrl ? (
+                                   <>
+                                      <div className="w-10 h-10 rounded-full bg-[#8624F0]/10 flex items-center justify-center text-[#8624F0]">
+                                        <FaVideo size={20} />
+                                      </div>
+                                      <a href={answer.videoUrl} target="_blank" rel="noopener noreferrer" className="text-[#8624F0] hover:underline font-medium text-[14px]">Watch Uploaded Video</a>
+                                   </>
+                                 ) : (
+                                   <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>No video uploaded</span>
+                                 )}
+                               </div>
+                             );
+                           } else if (fieldType === 'checkbox' || fieldType === 'multiple-choice' || fieldType === 'radio' || fieldType === 'dropdown') {
+                             // Assuming valueDisplay contains comma-separated options
+                             const options = typeof valueDisplay === 'string' ? valueDisplay.split(',').map(s => s.trim()).filter(Boolean) : [valueDisplay];
+                             fieldElement = (
+                               <div className="flex flex-col gap-3 mt-1">
+                                 {options.length > 0 ? options.map((opt, i) => (
+                                   <div key={i} className="flex items-center gap-3">
+                                     <input 
+                                       type={fieldType === 'checkbox' ? 'checkbox' : 'radio'} 
+                                       checked 
+                                       readOnly 
+                                       className="w-4 h-4 text-blue-600 border-gray-300 cursor-not-allowed" 
+                                     />
+                                     <span className="text-[14px]" style={{ color: 'var(--text-primary)' }}>{opt}</span>
+                                   </div>
+                                 )) : (
+                                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>N/A</span>
+                                 )}
+                               </div>
+                             );
+                           } else {
+                             // Default to standard input
+                             fieldElement = (
+                               <input 
+                                 type={fieldType === 'email' ? 'email' : fieldType === 'phone' || fieldType === 'number' ? 'number' : fieldType === 'date' ? 'date' : 'text'}
+                                 readOnly 
+                                 value={valueDisplay} 
+                                 placeholder="N/A"
+                                 className="w-full px-4 py-2.5 border rounded-md outline-none text-[14px]"
+                                 style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
+                               />
+                             );
                            }
                            
                            return (
-                             <div key={field.id} className="p-4 rounded-[10px]" style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)' }}>
-                               <h4 className="text-[12px] pb-1" style={{ color: 'var(--text-secondary)' }}>{field.label || 'Field'}</h4>
-                               <div className="text-[16px] font-medium" style={{ color: 'var(--text-primary)' }}>
-                                 {valueDisplay}
-                               </div>
+                             <div key={field.id} className="flex flex-col gap-2 w-full p-5 border rounded-[8px]" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                               <label className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+                                 {field.label || 'Field'} {field.isRequired && <span className="text-red-500 ml-1">*</span>}
+                               </label>
+                               {fieldElement}
                              </div>
                            );
                          })
@@ -888,52 +918,50 @@ export default function Candidates() {
                    </div>
 
                   <div className="popbottom mt-8">
-                   <div className="flex gap-4 mb-4">
-                     <button className="flex items-center justify-center gap-2 border border-[#761ED3] text-[#761ED3] hover:text-white text-[15px] leading-[40px] rounded-[8px] w-full cursor-pointer hover:bg-[#761ED3] transition-colors">
-                       <CgFileDocument className="text-[18px]" /> View Resume
-                     </button>
-                     <button className="flex items-center justify-center gap-2 border border-[#761ED3] text-[#761ED3] hover:text-white text-[15px] leading-[40px] rounded-[8px] w-full cursor-pointer hover:bg-[#761ED3] transition-colors">
-                       <FaVideo className="text-[18px]" /> Watch Video
-                     </button>
+                   <div className="mb-2">
+                     <label className="text-[14px] font-semibold" style={{ color: 'var(--text-secondary)' }}>Change Stage:</label>
                    </div>
                    <div className="relative w-full">
-                     <select 
-                       value={
-                         stages.find(s => (s.stageName || '').toLowerCase() === ((stageOverrides[selectedCandidate?.submissionId] || selectedCandidate?.currentStage) || '').toLowerCase())?.id || 'Applied'
-                       }
-                       onChange={async (e) => {
-                         const newStageId = e.target.value;
-                         if (newStageId === 'Applied') return;
-                         const stageObj = stages.find(s => s.id == newStageId);
-                         const newStageName = stageObj ? stageObj.stageName : "Applied";
-                         if (selectedCandidate?.submissionId) {
-                           setStageOverrides(prev => ({...prev, [selectedCandidate.submissionId]: newStageName}));
-                           setSelectedCandidate(prev => ({...prev, currentStage: newStageName}));
-                           
-                           try {
-                             await api.put('/candidate/workspace/stage/update', {
-                               submissionId: selectedCandidate.submissionId,
-                               stageId: parseInt(newStageId)
-                             });
-                           } catch(err) {
-                             console.error("Failed to update stage", err);
-                           }
-                         }
-                       }}
-                       className="appearance-none flex items-center justify-between px-4 border bg-[#210043] dark:bg-[#6d28d9] text-white text-[14px] leading-[40px] rounded-[8px] w-full cursor-pointer hover:bg-[#761ED3] transition-colors outline-none"
-                     >
-                       {stages && stages.length > 0 ? stages.map(s => (
-                         <option key={s.id} value={s.id}>{s.stageName}</option>
-                       )) : (
-                         <>
-                           <option value="Applied">Applied</option>
-                           <option value="Screening">Screening</option>
-                           <option value="Interview">Interview</option>
-                           <option value="Shortlisted">Shortlisted</option>
-                           <option value="Rejected">Rejected</option>
-                         </>
-                       )}
-                     </select>
+                      <select 
+                        value={selectedCandidate?.currentStageId || ''}
+                        onChange={async (e) => {
+                          const newStageId = e.target.value;
+                          const newStageName = e.target.options[e.target.selectedIndex].text;
+                          
+                          if (selectedCandidate?.submissionId && newStageId) {
+                            // Optimistic UI update
+                            setStageOverrides(prev => ({...prev, [selectedCandidate.submissionId]: newStageName}));
+                            setSelectedCandidate(prev => ({...prev, currentStageId: newStageId, currentStage: newStageName}));
+                            
+                            // Call API to save to backend
+                            try {
+                              await api.put('/candidate/workspace/stage/update', {
+                                submissionId: selectedCandidate.submissionId,
+                                stageId: parseInt(newStageId)
+                              });
+                            } catch (err) {
+                              console.error("Failed to update stage:", err);
+                              alert("Failed to update candidate stage. Please try again.");
+                            }
+                          }
+                        }}
+                        className="appearance-none flex items-center justify-between px-4 border bg-[#210043] dark:bg-[#6d28d9] text-white text-[14px] leading-[40px] rounded-[8px] w-full cursor-pointer hover:bg-[#761ED3] transition-colors outline-none"
+                      >
+                        <option value="" disabled>Select Stage</option>
+                        {stages && stages.length > 0 ? (
+                          stages.map(stage => (
+                            <option key={stage.id} value={stage.id}>{stage.name}</option>
+                          ))
+                        ) : (
+                          <>
+                            <option value="1">Applied</option>
+                            <option value="2">Screening</option>
+                            <option value="3">Interviewed</option>
+                            <option value="4">Shortlisted</option>
+                            <option value="5">Rejected</option>
+                          </>
+                        )}
+                      </select>
                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white">
                        <RiArrowDropDownLine className="text-[24px]" />
                      </div>

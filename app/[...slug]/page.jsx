@@ -499,6 +499,7 @@
 import { useEffect, useState, use } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form"; 
+import { Eye, EyeOff } from "lucide-react";
 // 1. Import the new upload thunks
 import { getForm, saveForm, uploadImageForm, uploadVideoForm } from "../Reducer/FormbuilderSlice"; 
 
@@ -511,6 +512,12 @@ export default function PublicFormPage({ params }) {
     
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    
+    // Password protection state
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [enteredPassword, setEnteredPassword] = useState("");
+    const [passwordError, setPasswordError] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const { register, handleSubmit, formState: { errors } } = useForm();
 
@@ -520,6 +527,14 @@ export default function PublicFormPage({ params }) {
             dispatch(getForm(joinedSlug));
         }
     }, [dispatch, slugArray]);
+
+    useEffect(() => {
+        if (currentForm) {
+            if (!currentForm.password) {
+                setIsAuthenticated(true);
+            }
+        }
+    }, [currentForm]);
 
     const onSubmit = async (data) => {
         setIsSubmitting(true);
@@ -634,6 +649,69 @@ export default function PublicFormPage({ params }) {
 
     if (!currentForm) {
         return <div className="text-gray-500 mt-20 flex justify-center w-full">Form not found or unavailable.</div>;
+    }
+
+    if (currentForm.isClosed) {
+        return (
+            <div className="w-full max-w-2xl bg-white p-8 rounded-[20px] shadow-sm text-center border border-red-200 mx-auto mt-10">
+                <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">!</div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Form Closed</h2>
+                <p className="text-gray-600">This form is no longer accepting responses.</p>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="w-full max-w-md bg-white p-8 rounded-[20px] shadow-sm text-center border border-gray-200 mx-auto mt-10">
+                <div className="w-16 h-16 bg-[#8624F0]/10 text-[#8624F0] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Protected Form</h2>
+                <p className="text-gray-600 mb-6 text-sm">Please enter the password to view and submit this form.</p>
+                <div className="space-y-4 text-left">
+                    <div>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Enter password"
+                                value={enteredPassword}
+                                onChange={(e) => {
+                                    setEnteredPassword(e.target.value);
+                                    setPasswordError("");
+                                }}
+                                className="w-full p-3 pr-10 border border-gray-300 rounded-[8px] focus:ring-2 focus:ring-[#8624F0]/30 focus:border-[#8624F0] outline-none transition-all"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        if (enteredPassword === currentForm.password) setIsAuthenticated(true);
+                                        else setPasswordError("Incorrect password");
+                                    }
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </button>
+                        </div>
+                        {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
+                    </div>
+                    <button
+                        onClick={() => {
+                            if (enteredPassword === currentForm.password) setIsAuthenticated(true);
+                            else setPasswordError("Incorrect password");
+                        }}
+                        className="w-full py-3 bg-[#8624F0] text-white rounded-[10px] font-bold hover:bg-[#6c1dc0] transition-colors"
+                    >
+                        Access Form
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     if (isSuccess) {

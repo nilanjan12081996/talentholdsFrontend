@@ -11,7 +11,9 @@ export default function SettingsModal({
   password,
   setPassword,
   closeForm,
-  setCloseForm
+  setCloseForm,
+  onSave,
+  markUnsaved
 }) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -41,7 +43,7 @@ export default function SettingsModal({
               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Require a password to access this form</p>
             </div>
             <div 
-              onClick={() => setRequirePassword(!requirePassword)}
+              onClick={() => { setRequirePassword(!requirePassword); markUnsaved(); }}
               className={`w-11 h-6 rounded-full cursor-pointer relative transition-colors ${requirePassword ? 'bg-[#8624F0]' : 'bg-[var(--border-color)]'}`}
             >
               <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${requirePassword ? 'translate-x-5' : ''}`} />
@@ -55,7 +57,7 @@ export default function SettingsModal({
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); markUnsaved(); }}
                   className="w-full h-[40px] pl-3 pr-10 rounded-[8px] text-sm outline-none focus:ring-2 focus:ring-[#8624F0]/30"
                   style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                   placeholder="Enter a secure password"
@@ -69,6 +71,14 @@ export default function SettingsModal({
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={() => onSave()}
+                  className="px-4 py-1.5 rounded-[6px] bg-[#8624F0] text-white text-xs font-medium hover:bg-[#6c1dc0] transition-colors"
+                >
+                  Save Password
+                </button>
+              </div>
             </div>
           )}
 
@@ -78,7 +88,7 @@ export default function SettingsModal({
               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Stop accepting new responses</p>
             </div>
             <div 
-              onClick={() => setCloseForm(!closeForm)}
+              onClick={() => { setCloseForm(!closeForm); markUnsaved(); }}
               className={`w-11 h-6 rounded-full cursor-pointer relative transition-colors ${closeForm ? 'bg-[#8624F0]' : 'bg-[var(--border-color)]'}`}
             >
               <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${closeForm ? 'translate-x-5' : ''}`} />
@@ -89,10 +99,10 @@ export default function SettingsModal({
         {/* Footer */}
         <div className="flex justify-end pt-4" style={{ borderTop: '1px solid var(--border-color)' }}>
           <button
-            onClick={onClose}
+            onClick={() => { onSave(); onClose(); }}
             className="px-6 py-2.5 rounded-[8px] bg-[#8624F0] text-white font-medium text-sm transition-colors hover:bg-[#6c1dc0]"
           >
-            Done
+            Save & Close
           </button>
         </div>
       </div>

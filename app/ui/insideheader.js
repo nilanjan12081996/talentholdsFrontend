@@ -18,7 +18,6 @@ const Insideheader = ({ children }) => {
     const overrides = {
       '/dashboard': { title: 'Main Dashboard', breadcrumb: 'Pages / Dashboard' },
       '/profile': { title: 'Profile Settings', breadcrumb: 'Pages / Profile' },
-      '/settings': { title: 'Workspace Settings', breadcrumb: 'Pages / Settings' },
       '/forms': { title: 'My Forms', breadcrumb: 'Pages / Forms' },
       '/forms/builder': { title: 'Form Builder', breadcrumb: 'Pages / Forms / Builder' },
       '/candidates': { title: 'Candidates Management', breadcrumb: 'Pages / Candidates' },

@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, ExternalLink, Search, Loader2 } from 'lucide-react';
+import { Plus, ExternalLink, Search, Loader2, Filter, ArrowUpDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,19 +16,60 @@ export default function Forms() {
   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
   const [showInitialModal, setShowInitialModal] = useState(false);
   
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(0);
-
   // State for "Create New Form" Modal
   const [openworkspaceModal, setWorkspaceModal] = useState(false);
+  
+  // Search, Filter, Sort, Pagination States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [sortConfig, setSortConfig] = useState({ key: 'updatedAt', direction: 'desc' });
+  const [currentPage, setCurrentPage] = useState(0);
+
+
 
   // Redux Selectors
   const { workspaceData, loading } = useSelector((state) => state?.workspace || {});
   const { allforms } = useSelector((state) => state?.formBuilder)
 
-  // --- UPDATED LOGIC: Extract from data.content based on paginated API response ---
-  const formsList = allforms?.data?.content || [];
-  console.log("formsList", allforms);
+  // --- UPDATED LOGIC: Fetch all forms up to 100 and do client-side processing ---
+  const rawFormsList = allforms?.data?.content || [];
+  
+  // 1. Search & Filter
+  const filteredForms = rawFormsList.filter(form => {
+    const matchesSearch = (form.title || '').toLowerCase().includes(searchQuery.toLowerCase());
+    let matchesFilter = true;
+    if (filterStatus === 'active') matchesFilter = !form.isClosed;
+    if (filterStatus === 'closed') matchesFilter = form.isClosed;
+    return matchesSearch && matchesFilter;
+  });
+
+  // 2. Sort
+  const sortedForms = [...filteredForms].sort((a, b) => {
+    let valA, valB;
+    if (sortConfig.key === 'fields') {
+      valA = a.fields?.length || 0;
+      valB = b.fields?.length || 0;
+    } else if (sortConfig.key === 'responses') {
+      valA = a.responseCount || 0;
+      valB = b.responseCount || 0;
+    } else if (sortConfig.key === 'createdAt') {
+      valA = new Date(a.createdAt || 0).getTime();
+      valB = new Date(b.createdAt || 0).getTime();
+    } else { // updatedAt
+      valA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      valB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+    }
+    
+    if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // 3. Pagination
+  const itemsPerPage = 6;
+  const totalPages = Math.ceil(sortedForms.length / itemsPerPage) || 1;
+  const startIndex = currentPage * itemsPerPage;
+  const currentFormsList = sortedForms.slice(startIndex, startIndex + itemsPerPage);
 
   useEffect(() => {
     dispatch(workspaceList());
@@ -50,12 +91,17 @@ export default function Forms() {
     }
   }, [workspaceData]);
 
-  // Fetch paginated data when workspace or page changes
+  // Fetch large data initially when workspace changes
   useEffect(() => {
     if (selectedWorkspace) {
-      dispatch(allFormList({ id: selectedWorkspace, page: currentPage, size: 6 }));
+      dispatch(allFormList({ id: selectedWorkspace, page: 0, size: 100 }));
     }
-  }, [selectedWorkspace, currentPage, dispatch]);
+  }, [selectedWorkspace, dispatch]);
+
+  // Reset page to 0 when search/filter/sort changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery, filterStatus, sortConfig]);
 
   // Handler for Initial Page Load Selection
   const handleInitialWorkspaceSelect = (workspaceId) => {
@@ -83,16 +129,77 @@ export default function Forms() {
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Forms</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Create and manage application and referral forms</p>
         </div>
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <div className="hidden md:flex items-center text-sm gap-4" style={{ color: 'var(--text-secondary)' }}>
-            <span className="text-[#8624F0] font-bold cursor-pointer">All Forms ({formsList.length})</span>
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="hidden lg:flex items-center text-sm mr-2" style={{ color: 'var(--text-secondary)' }}>
+            <span className="text-[#8624F0] font-bold">All Forms ({rawFormsList.length})</span>
           </div>
+          <div className="relative w-full sm:w-48">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search size={16} className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search Forms..."
+              disabled={!selectedWorkspace}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8624f0] focus:border-transparent transition-colors text-sm disabled:opacity-50"
+              style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
+            />
+          </div>
+          
+          <div className="relative w-full sm:w-auto">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Filter size={16} className="text-gray-400" />
+            </div>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              disabled={!selectedWorkspace}
+              className="w-full sm:w-auto pl-10 pr-8 py-2 border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#8624f0] focus:border-transparent transition-colors text-sm cursor-pointer disabled:opacity-50"
+              style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+
+          <div className="relative w-full sm:w-auto flex items-center border rounded-lg transition-colors focus-within:ring-2 focus-within:ring-[#8624f0] focus-within:border-transparent" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)' }}>
+            <div className="pl-3 pr-2 flex items-center pointer-events-none">
+              <ArrowUpDown size={16} className="text-gray-400" />
+            </div>
+            <select
+              value={sortConfig.key}
+              onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
+              disabled={!selectedWorkspace}
+              className="py-2 pr-2 bg-transparent appearance-none focus:outline-none text-sm cursor-pointer disabled:opacity-50"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              <option value="updatedAt">Last Modified</option>
+              <option value="createdAt">Created On</option>
+              <option value="fields">Fields</option>
+              <option value="responses">Responses</option>
+            </select>
+            <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+            <select
+              value={sortConfig.direction}
+              onChange={(e) => setSortConfig({ ...sortConfig, direction: e.target.value })}
+              disabled={!selectedWorkspace}
+              className="py-2 pl-2 pr-4 bg-transparent appearance-none focus:outline-none text-sm cursor-pointer disabled:opacity-50"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              <option value="desc">Desc</option>
+              <option value="asc">Asc</option>
+            </select>
+          </div>
+
           <button
             onClick={handleAddForm}
             disabled={!selectedWorkspace}
-            className="bg-[#8624F0] text-white px-6 py-3 rounded-[10px] font-bold flex items-center gap-2 hover:bg-[#6c1dc0] transition-colors whitespace-nowrap ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto bg-[#8624F0] text-white px-5 py-2 rounded-[8px] font-bold flex items-center justify-center gap-2 hover:bg-[#6c1dc0] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Plus size={18} /> Create New Form
+            <Plus size={18} /> New Form
           </button>
         </div>
       </div>
@@ -119,7 +226,7 @@ export default function Forms() {
           <Loader2 className="w-8 h-8 animate-spin text-[#8624F0] mb-4" />
           <p style={{ color: 'var(--text-secondary)' }}>Loading forms...</p>
         </div>
-      ) : formsList.length === 0 ? (
+      ) : currentFormsList.length === 0 ? (
         <div className="rounded-[20px] py-20 flex flex-col items-center justify-center text-center border border-dashed" style={{ borderColor: 'var(--border-color)' }}>
           <p style={{ color: 'var(--text-secondary)' }}>No forms found for this workspace. Click "Create New Form" to get started.</p>
         </div>
@@ -128,10 +235,10 @@ export default function Forms() {
           {/* Scrollable Grid Container */}
           <div className="flex-1 overflow-y-auto pr-2 pb-4 custom-scrollbar">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {formsList.map((form) => (
+              {currentFormsList.map((form) => (
                 <div
                   key={form.id}
-                  className="rounded-[20px] p-6 shadow-sm hover:shadow-md transition-all flex flex-col h-full"
+                  className={`rounded-[20px] p-6 shadow-sm hover:shadow-md transition-all flex flex-col h-full ${form.isClosed ? 'opacity-60 grayscale-[20%]' : ''}`}
                   style={{
                     background: 'var(--bg-card)',
                     border: '1px solid var(--border-color)',
@@ -145,9 +252,15 @@ export default function Forms() {
                       <span className="px-2.5 py-1 bg-[#E6F6FD] dark:bg-[#1a3340] text-[#00A3FF] text-[10px] font-bold rounded-full whitespace-nowrap">
                         Form
                       </span>
-                      <span className="px-2.5 py-1 bg-[#ECFCE5] dark:bg-[#1a3d1a] text-[#25852F] dark:text-[#4ade80] text-[10px] font-bold rounded-full whitespace-nowrap">
-                        {form.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                      {form.isClosed ? (
+                        <span className="px-2.5 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold rounded-full whitespace-nowrap">
+                          Closed
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 bg-[#ECFCE5] dark:bg-[#1a3d1a] text-[#25852F] dark:text-[#4ade80] text-[10px] font-bold rounded-full whitespace-nowrap">
+                          {form.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -160,22 +273,24 @@ export default function Forms() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-xs font-bold mb-6 shrink-0" style={{ color: 'var(--text-primary)' }}>
-                    <div>
-                      <span className="font-normal block mb-1" style={{ color: 'var(--text-secondary)' }}>Fields</span>
+                  <div className="flex justify-between items-center text-[11px] font-bold mb-6 shrink-0 gap-2 text-center" style={{ color: 'var(--text-primary)' }}>
+                    <div className="flex flex-col">
+                      <span className="font-normal block mb-0.5" style={{ color: 'var(--text-secondary)' }}>Fields</span>
                       {form.fields?.length || 0}
                     </div>
-                    <div>
-                      <span className="font-normal block mb-1" style={{ color: 'var(--text-secondary)' }}>Responses</span>
+                    <div className="flex flex-col">
+                      <span className="font-normal block mb-0.5" style={{ color: 'var(--text-secondary)' }}>Responses</span>
                       {form.responseCount || 0}
                     </div>
-                    <div>
-                      <span className="font-normal block mb-1" style={{ color: 'var(--text-secondary)' }}>Created On</span>
+                    <div className="flex flex-col">
+                      <span className="font-normal block mb-0.5" style={{ color: 'var(--text-secondary)' }}>Created On</span>
                       {form.createdAt ? new Date(form.createdAt).toLocaleDateString() : 'N/A'}
                     </div>
-                    <div>
-                      <span className="font-normal block mb-1" style={{ color: 'var(--text-secondary)' }}>Last Modified</span>
-                      {form.updatedAt ? new Date(form.updatedAt).toLocaleDateString() : 'N/A'}
+                    <div className="flex flex-col">
+                      <span className="font-normal block mb-0.5" style={{ color: 'var(--text-secondary)' }}>Last Modified</span>
+                      {form.updatedAt 
+                        ? new Date(form.updatedAt).toLocaleDateString() 
+                        : (form.createdAt ? new Date(form.createdAt).toLocaleDateString() : 'N/A')}
                     </div>
                   </div>
 
@@ -209,27 +324,29 @@ export default function Forms() {
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex justify-between items-center pt-4 border-t shrink-0" style={{ borderColor: 'var(--border-color)' }}>
-            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-              Showing Page {(allforms?.data?.number || 0) + 1} of {allforms?.data?.totalPages || 1}
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                disabled={allforms?.data?.first ?? true}
-                className="px-4 py-2 border border-[#8624F0] text-[#8624F0] rounded-[8px] font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#8624F0]/5 transition-colors cursor-pointer"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setCurrentPage(p => Math.min((allforms?.data?.totalPages || 1) - 1, p + 1))}
-                disabled={allforms?.data?.last ?? true}
-                className="px-4 py-2 border border-[#8624F0] text-[#8624F0] rounded-[8px] font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#8624F0]/5 transition-colors cursor-pointer"
-              >
-                Next
-              </button>
+          {totalPages > 0 && (
+            <div className="flex justify-between items-center pt-4 border-t shrink-0" style={{ borderColor: 'var(--border-color)' }}>
+              <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                Showing Page {currentPage + 1} of {totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                  className="px-4 py-2 border border-[#8624F0] text-[#8624F0] rounded-[8px] font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#8624F0]/5 transition-colors cursor-pointer"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={currentPage >= totalPages - 1}
+                  className="px-4 py-2 border border-[#8624F0] text-[#8624F0] rounded-[8px] font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#8624F0]/5 transition-colors cursor-pointer"
+                >
+                  Next
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
