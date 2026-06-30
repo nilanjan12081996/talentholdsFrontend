@@ -3,18 +3,19 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-    ArrowLeft, Eye, Settings as SettingsIcon,
+    ArrowLeft, Eye, Settings as SettingsIcon, Sliders,
     Share2, GripVertical, Trash2, Plus, Loader2, Pencil
 } from "lucide-react";
 import FieldBlocks from "../../ui/form-builder/FieldBlocks"
 import FieldSettings from "../../ui/form-builder/FieldSettings";
 import ShareModal from "../../ui/form-builder/ShareModal";
 import SettingsModal from "../../ui/form-builder/SettingsModal";
+import DesignSettings from "../../ui/form-builder/DesignSettings";
 import DeleteConfirmModal from "../../ui/form-builder/DeleteConfirmModal";
 import UnsavedConfirmModal from "../../ui/form-builder/UnsavedConfirmModal";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { createForm, getFormById, updateForm, deleteFormField } from "../../Reducer/FormbuilderSlice"
+import { createForm, getFormById, updateForm, deleteFormField, uploadFormLogo, uploadFormBackground, getFormLogo, getFormBackground } from "../../Reducer/FormbuilderSlice"
 import { toast } from 'react-toastify';
 
 // Maps API field type codes back to UI type strings
@@ -58,6 +59,10 @@ export default function FormBuilderPage() {
     const [fieldToDeleteId, setFieldToDeleteId] = useState(null);
     const [isDeletingField, setIsDeletingField] = useState(false);
     const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+    const [formLogo, setFormLogo] = useState(null);
+    const [logoFile, setLogoFile] = useState(null);
+    const [formBgImage, setFormBgImage] = useState(null);
+    const [bgFile, setBgFile] = useState(null);
     const descriptionRef = useRef(null);
 
     const router = useRouter();
@@ -107,6 +112,18 @@ export default function FormBuilderPage() {
         if (isEditMode && formId) {
             setIsLoadingForm(true);
             dispatch(getFormById(formId)).finally(() => setIsLoadingForm(false));
+            
+            // Fetch Logo and Background
+            dispatch(getFormLogo(formId)).then((res) => {
+                if(res.payload?.data?.logo) {
+                    setFormLogo({ url: res.payload.data.logo });
+                }
+            });
+            dispatch(getFormBackground(formId)).then((res) => {
+                if(res.payload?.data?.backImage) {
+                    setFormBgImage({ url: res.payload.data.backImage });
+                }
+            });
         }
     }, [formId, isEditMode, dispatch]);
 
@@ -329,6 +346,10 @@ export default function FormBuilderPage() {
                 // ── EDIT MODE: POST /form/add/update with id in body ──
                 const resultAction = await dispatch(updateForm(payload));
                 if (updateForm.fulfilled.match(resultAction)) {
+                    // Upload files if selected
+                    if (logoFile) await dispatch(uploadFormLogo({ formId: payload.id, file: logoFile }));
+                    if (bgFile) await dispatch(uploadFormBackground({ formId: payload.id, file: bgFile }));
+
                     const generatedLink = resultAction.payload?.link || editFormData?.publicSlug || formLink;
                     setFormLink(generatedLink);
                     setIsPublished(true);
@@ -343,8 +364,15 @@ export default function FormBuilderPage() {
                 // ── CREATE MODE: POST /form/add/update without id ──
                 const resultAction = await dispatch(createForm(payload));
                 if (createForm.fulfilled.match(resultAction)) {
+                    const newFormId = resultAction.payload?.formId || resultAction.payload?.data?.id || resultAction.payload?.id;
+                    
+                    // Upload files if selected
+                    if (newFormId) {
+                        if (logoFile) await dispatch(uploadFormLogo({ formId: newFormId, file: logoFile }));
+                        if (bgFile) await dispatch(uploadFormBackground({ formId: newFormId, file: bgFile }));
+                    }
+
                     const generatedLink = resultAction.payload?.link;
-                    const newFormId = resultAction.payload?.formId;
                     setFormLink(generatedLink);
                     setIsPublished(true);
                     setIsUnsaved(false);
@@ -403,27 +431,27 @@ export default function FormBuilderPage() {
                     )}
                 </div>
                 <div className="flex items-center gap-2">
+
                     <button
+                        onClick={() => {
+                            if (selectedFieldId === null) {
+                                if (fields.length > 0) setSelectedFieldId(fields[0].id);
+                            } else {
+                                setSelectedFieldId(null);
+                            }
+                        }}
                         className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
                         style={{ color: 'var(--text-secondary)' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-main)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        title={selectedFieldId === null ? "Switch to Field Settings" : "Switch to Form Settings"}
                     >
-                        <Eye className="w-5 h-5" />
-                    </button>
-                    <button
-                        onClick={() => setShowSettingsModal(true)}
-                        className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
-                        style={{ color: 'var(--text-secondary)' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-main)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                    >
-                        <SettingsIcon className="w-5 h-5" />
+                        {selectedFieldId === null ? <Sliders className="w-5 h-5" /> : <SettingsIcon className="w-5 h-5" />}
                     </button>
                     <button
                         onClick={handlePublish}
                         disabled={loading || (!isUnsaved && isEditMode)}
-                        className="flex items-center gap-2 px-5 py-2 bg-[#8624F0] text-white rounded-[10px] font-bold text-sm hover:bg-[#6c1dc0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-5 py-2 bg-[#8624F0] text-white rounded-[10px] font-bold text-sm hover:bg-[#6c1dc0] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                         <div className={`w-2.5 h-2.5 rounded-full ${isUnsaved ? 'bg-yellow-400' : 'bg-green-400'}`}></div>
                         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -431,7 +459,7 @@ export default function FormBuilderPage() {
                     </button>
                     <button
                         onClick={() => setShowShareModal(true)}
-                        className="flex items-center gap-2 px-5 py-2 bg-[#e9edf7] text-[#8624F0] rounded-[10px] font-bold text-sm hover:bg-[#d5dff0] transition-colors"
+                        className="flex items-center gap-2 px-5 py-2 bg-[#e9edf7] text-[#8624F0] rounded-[10px] font-bold text-sm hover:bg-[#d5dff0] transition-colors cursor-pointer"
                     >
                         <Share2 className="w-4 h-4" />
                         Share
@@ -446,9 +474,30 @@ export default function FormBuilderPage() {
                 <FieldBlocks onAddField={addField} />
 
                 {/* Center: Canvas */}
-                <div className="flex-1 overflow-y-auto px-8 py-8">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="rounded-[20px] shadow-sm p-8" style={{ background: 'var(--bg-card)' }}>
+                <div className="flex-1 overflow-y-auto px-8 py-8 bg-[var(--bg-main)]">
+                    <div className="max-w-3xl mx-auto relative z-10">
+                        <div className="rounded-[8px] shadow-sm border border-[var(--border-color)] relative overflow-hidden bg-[var(--bg-card)]">
+                            
+                            {/* Banner Image */}
+                            {formBgImage && (
+                                <div 
+                                    className="w-full h-[160px] sm:h-[200px] bg-cover bg-center bg-no-repeat"
+                                    style={{ backgroundImage: `url(${formBgImage.url})` }}
+                                />
+                            )}
+
+                            {/* Content Container */}
+                            <div className="px-8 pb-8 pt-0 relative z-10">
+                                {/* Logo / Profile Pic */}
+                                {formLogo && (
+                                    <div className={`${formBgImage ? '-mt-[50px] sm:-mt-[60px]' : 'mt-8'} mb-6 flex justify-start`}>
+                                        <img 
+                                            src={formLogo.url} 
+                                            alt="Form Logo" 
+                                            className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] object-cover rounded-full border-4 border-white shadow-md bg-white relative z-10" 
+                                        />
+                                    </div>
+                                )}
 
                             {/* Form Header */}
                             <div className="mb-8 space-y-3">
@@ -512,45 +561,69 @@ export default function FormBuilderPage() {
                             {fields.length > 0 && (
                                 <button
                                     onClick={() => addField("short-text")}
-                                    className="w-full mt-6 py-3 border-2 border-dashed rounded-[10px] text-sm font-medium transition-colors flex items-center justify-center gap-2 hover:border-[#8624F0] hover:text-[#8624F0]"
+                                    className="w-full mt-6 py-3 border-2 border-dashed rounded-[10px] text-sm font-medium transition-colors flex items-center justify-center gap-2 hover:border-[#8624F0] hover:text-[#8624F0] cursor-pointer"
                                     style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
                                 >
                                     <Plus className="w-4 h-4" />
                                     Add Question
                                 </button>
                             )}
+
+                            {/* Bottom Action Buttons */}
+                            <div className="mt-8 flex items-center justify-end gap-3 pt-6 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                                <button
+                                    onClick={() => setShowShareModal(true)}
+                                    className="flex items-center gap-2 px-5 py-2 bg-[#e9edf7] text-[#8624F0] rounded-[10px] font-bold text-sm hover:bg-[#d5dff0] transition-colors cursor-pointer"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    Share
+                                </button>
+                                <button
+                                    onClick={handlePublish}
+                                    disabled={loading || (!isUnsaved && isEditMode)}
+                                    className="flex items-center gap-2 px-5 py-2 bg-[#8624F0] text-white rounded-[10px] font-bold text-sm hover:bg-[#6c1dc0] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    <div className={`w-2.5 h-2.5 rounded-full ${isUnsaved ? 'bg-yellow-400' : 'bg-green-400'}`}></div>
+                                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Save
+                                </button>
+                            </div>
+                            
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Right: Field Settings */}
-                {selectedField && (
+                {/* Right: Settings Sidebar */}
+                {selectedField ? (
                     <FieldSettings
                         field={selectedField}
                         onUpdate={(updates) => updateField(selectedField.id, updates)}
                         onClose={() => setSelectedFieldId(null)}
                     />
+                ) : (
+                    <DesignSettings 
+                        formLogo={formLogo}
+                        setFormLogo={(logo) => { setFormLogo(logo); setIsUnsaved(true); }}
+                        formBgImage={formBgImage}
+                        setFormBgImage={(bg) => { setFormBgImage(bg); setIsUnsaved(true); }}
+                        setLogoFile={(file) => { setLogoFile(file); setIsUnsaved(true); }}
+                        setBgFile={(file) => { setBgFile(file); setIsUnsaved(true); }}
+                        requirePassword={requirePassword}
+                        setRequirePassword={setRequirePassword}
+                        password={password}
+                        setPassword={setPassword}
+                        closeForm={closeForm}
+                        setCloseForm={setCloseForm}
+                        markUnsaved={() => setIsUnsaved(true)}
+                    />
                 )}
             </div>
 
             <ShareModal
-               
                 formLink={formLink}
                 isOpen={showShareModal}
                 onClose={() => setShowShareModal(false)}
-                requirePassword={requirePassword}
-                setRequirePassword={setRequirePassword}
-                password={password}
-                setPassword={setPassword}
-                closeForm={closeForm}
-                setCloseForm={setCloseForm}
-                onSave={handlePublish}
-                markUnsaved={() => setIsUnsaved(true)}
-            />
-
-            <SettingsModal
-                isOpen={showSettingsModal}
-                onClose={() => setShowSettingsModal(false)}
                 requirePassword={requirePassword}
                 setRequirePassword={setRequirePassword}
                 password={password}

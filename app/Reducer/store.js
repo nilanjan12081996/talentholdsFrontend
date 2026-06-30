@@ -9,6 +9,7 @@ import FormbuilderSlice from './FormbuilderSlice';
 import CandidateSlice from './CandidateSlice';
 import PlanSlice from './PlanSlice';
 import WorkspaceSlice from './WorkspaceSlice';
+import KanbanSlice from './KanbanSlice';
 const store=configureStore(
     {
         reducer:{
@@ -20,7 +21,8 @@ const store=configureStore(
             demo:DemoSlice,
             formBuilder:FormbuilderSlice,
             candidate:CandidateSlice,
-            plan:PlanSlice
+            plan:PlanSlice,
+            kanban:KanbanSlice
         },
         devTools: process.env.NODE_ENV
     }

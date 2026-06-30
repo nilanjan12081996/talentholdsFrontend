@@ -36,6 +36,117 @@ export const createForm=createAsyncThunk(
         }
     }
 )
+export const uploadFormLogo = createAsyncThunk(
+    'uploadFormLogo',
+    async ({ formId, file }, { rejectWithValue }) => {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await api.post(`/v1/forms/${formId}/logo`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
+            
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+);
+
+export const uploadFormBackground = createAsyncThunk(
+    'uploadFormBackground',
+    async ({ formId, file }, { rejectWithValue }) => {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await api.post(`/v1/forms/${formId}/background`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
+            
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+);
+
+export const getFormLogo = createAsyncThunk(
+    'getFormLogo',
+    async (formId, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/v1/forms/${formId}/logo`);
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+);
+
+export const getFormBackground = createAsyncThunk(
+    'getFormBackground',
+    async (formId, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/v1/forms/${formId}/background`);
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+);
+
+export const getFormLogoBySlug = createAsyncThunk(
+    'getFormLogoBySlug',
+    async (slug, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/v1/forms/slug/logo?slug=${encodeURIComponent(slug)}`);
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+);
+
+export const getFormBackgroundBySlug = createAsyncThunk(
+    'getFormBackgroundBySlug',
+    async (slug, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/v1/forms/slug/background?slug=${encodeURIComponent(slug)}`);
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+);
 
 export const getForm=createAsyncThunk(
     'getForm',

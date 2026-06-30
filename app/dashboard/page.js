@@ -23,14 +23,14 @@ export default function Dashboard() {
     totalShortlisted: 0
   });
   const [stages, setStages] = useState([]);
-  
+
   const { workspaceData } = useSelector((state) => state?.workspace || {});
   const { candidate } = useSelector((state) => state?.candidate || {});
   const { allforms } = useSelector((state) => state?.formBuilder || {});
 
   useEffect(() => {
     dispatch(workspaceList());
-    
+
     // Fetch dynamic dashboard stats
     api.get('/dashboard/stats').then(res => {
       if (res.data?.status) {
@@ -43,10 +43,10 @@ export default function Dashboard() {
     if (workspaceData?.data && workspaceData.data.length > 0) {
       const primaryId = localStorage.getItem('primaryWorkspaceId');
       const targetWorkspace = (primaryId && workspaceData.data.find(w => w.id == primaryId)) ? primaryId : workspaceData.data[0].id;
-      
+
       dispatch(getCandidateByWorkspace({ id: targetWorkspace }));
       dispatch(allFormList({ id: targetWorkspace, page: 0, size: 20 }));
-      
+
       // Fetch stages for proper mapping
       api.get(`/stages?workspaceId=${targetWorkspace}`).then(res => {
         if (res.data?.data) {
@@ -213,7 +213,7 @@ export default function Dashboard() {
         <div className="rounded-[20px] p-6 flex flex-col h-full overflow-hidden" style={{ background: 'var(--bg-card)' }}>
           <div className="mb-6 shrink-0">
             <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Recent Forms</h2>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Create and manage application and referral forms</p>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Create and manage forms</p>
           </div>
           <div className="space-y-4 flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#8624F0] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#6c1dc0]">
             {dynamicForms.map((form, i) => (
@@ -227,9 +227,9 @@ export default function Dashboard() {
                   <div className="flex gap-2 shrink-0">
                     <span className="px-2 py-1 bg-[#E6F6FD] dark:bg-[#1a3340] text-[#00A3FF] text-[10px] font-bold rounded">Form</span>
                     {form.isClosed ? (
-                        <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold rounded">Closed</span>
+                      <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold rounded">Closed</span>
                     ) : (
-                        <span className="px-2 py-1 bg-[#ECFCE5] dark:bg-[#1a3d1a] text-[#25852F] dark:text-[#4ade80] text-[10px] font-bold rounded">Active</span>
+                      <span className="px-2 py-1 bg-[#ECFCE5] dark:bg-[#1a3d1a] text-[#25852F] dark:text-[#4ade80] text-[10px] font-bold rounded">Active</span>
                     )}
                   </div>
                 </div>
@@ -250,10 +250,10 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => {
-                        const url = `${window.location.origin}/${form.publicSlug}`;
-                        navigator.clipboard.writeText(url);
-                        alert("Link copied!");
-                      }} className="w-full cursor-pointer bg-[#210043] dark:bg-[#6d28d9] text-white rounded-lg py-2.5 text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#340b61] dark:hover:bg-[#7c3aed] transition-colors">
+                    const url = `${window.location.origin}/${form.publicSlug}`;
+                    navigator.clipboard.writeText(url);
+                    alert("Link copied!");
+                  }} className="w-full cursor-pointer bg-[#210043] dark:bg-[#6d28d9] text-white rounded-lg py-2.5 text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#340b61] dark:hover:bg-[#7c3aed] transition-colors">
                     Copy Link
                   </button>
                   <button onClick={() => window.open(`/${form.publicSlug}`, '_blank')} className="p-2.5 border border-[#8624F0] dark:border-[#7c3aed] text-[#8624F0] dark:text-[#a78bfa] rounded-[8px] hover:bg-[#8624F0]/5 transition-colors cursor-pointer">

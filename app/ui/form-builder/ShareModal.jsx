@@ -190,7 +190,8 @@ export default function ShareModal({
   closeForm,
   setCloseForm,
   onSave,
-  markUnsaved
+  markUnsaved,
+  hideSettings = false
 }) {
   const [activeTab, setActiveTab] = useState("link");
   const [showPassword, setShowPassword] = useState(false);
@@ -226,6 +227,26 @@ export default function ShareModal({
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
+    }
+  };
+
+  const sharePortal = async () => {
+    if (!formUrl) return;
+    
+    const shareData = {
+      title: "TalentHolds - Smart Form Builder",
+      text: "Create and share stunning, highly-customizable forms in minutes with TalentHolds! Check out this form I just built: \\n\\n",
+      url: formUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        alert("Native sharing is not supported on this device/browser.");
+      }
+    } catch (err) {
+      console.log("Error sharing:", err);
     }
   };
 
@@ -332,14 +353,15 @@ export default function ShareModal({
               </div>
             </div>
 
+            {!hideSettings && (
             <div className="p-4 rounded-[10px] space-y-3" style={{ background: 'var(--bg-main)' }}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Password Protection</p>
-                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Require a password to access this form</p>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Share confidential forms only with authorized people</p>
                 </div>
                 <div 
-                  onClick={() => { setRequirePassword(!requirePassword); markUnsaved(); }}
+                  onClick={() => { setRequirePassword(!requirePassword); markUnsaved && markUnsaved(); }}
                   className={`w-11 h-6 rounded-full cursor-pointer relative transition-colors ${requirePassword ? 'bg-[#8624F0]' : 'bg-[var(--border-color)]'}`}
                 >
                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${requirePassword ? 'translate-x-5' : ''}`} />
@@ -353,7 +375,7 @@ export default function ShareModal({
                     <input
                       type={showPassword ? "text" : "password"}
                       value={password}
-                      onChange={(e) => { setPassword(e.target.value); markUnsaved(); }}
+                      onChange={(e) => { setPassword(e.target.value); markUnsaved && markUnsaved(); }}
                       className="w-full h-[40px] pl-3 pr-10 rounded-[8px] text-sm outline-none focus:ring-2 focus:ring-[#8624F0]/30"
                       style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                       placeholder="Enter a secure password"
@@ -369,7 +391,7 @@ export default function ShareModal({
                   </div>
                   <div className="flex justify-end mt-2">
                     <button
-                      onClick={() => onSave()}
+                      onClick={() => onSave && onSave()}
                       className="px-4 py-1.5 rounded-[6px] bg-[#8624F0] text-white text-xs font-medium hover:bg-[#6c1dc0] transition-colors"
                     >
                       Save Password
@@ -384,13 +406,14 @@ export default function ShareModal({
                   <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Stop accepting new responses</p>
                 </div>
                 <div 
-                  onClick={() => { setCloseForm(!closeForm); markUnsaved(); }}
+                  onClick={() => { setCloseForm(!closeForm); markUnsaved && markUnsaved(); }}
                   className={`w-11 h-6 rounded-full cursor-pointer relative transition-colors ${closeForm ? 'bg-[#8624F0]' : 'bg-[var(--border-color)]'}`}
                 >
                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${closeForm ? 'translate-x-5' : ''}`} />
                 </div>
               </div>
             </div>
+            )}
 
             {closeForm ? (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-[10px] p-4">
@@ -465,13 +488,19 @@ export default function ShareModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end mt-6 pt-4" style={{ borderTop: '1px solid var(--border-color)' }}>
+        <div className="flex justify-end gap-3 mt-6 pt-4" style={{ borderTop: '1px solid var(--border-color)' }}>
+          <button
+            onClick={sharePortal}
+            className="px-6 py-2.5 bg-[#e9edf7] text-[#8624F0] rounded-[8px] font-medium text-sm transition-colors hover:bg-[#d5dff0] flex items-center gap-2"
+          >
+            <Share2 className="w-4 h-4" /> Share
+          </button>
           <button
             onClick={() => { onSave(); onClose(); }}
             className="px-6 py-2.5 rounded-[8px] font-medium text-sm transition-colors hover:bg-[#8624F0]/5"
             style={{ border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
           >
-            Save & Close
+            Save
           </button>
         </div>
       </div>

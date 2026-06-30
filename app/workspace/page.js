@@ -107,7 +107,14 @@ export default function WorkspacePage() {
       
       <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2 text-text-primary">My Workspaces</h1>
+          <h1 className="text-3xl font-bold mb-2 flex items-baseline gap-2 text-text-primary">
+            My Workspaces
+            {primaryId && workspaceData?.data && (
+              <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>
+                (You are in the <span className="text-[#8624F0] font-bold">{workspaceData.data.find(w => w.id == primaryId)?.name || ''}</span> workspace)
+              </span>
+            )}
+          </h1>
           <p className="text-sm text-text-secondary">
             Manage your workspaces and set your default environment.
           </p>

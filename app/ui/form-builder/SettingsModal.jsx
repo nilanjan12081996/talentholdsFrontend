@@ -40,7 +40,7 @@ export default function SettingsModal({
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Password Protection</p>
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Require a password to access this form</p>
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Share confidential forms only with authorized people</p>
             </div>
             <div 
               onClick={() => { setRequirePassword(!requirePassword); markUnsaved(); }}

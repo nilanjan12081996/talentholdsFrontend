@@ -1,363 +1,26 @@
-
-
-// 'use client';
-
-// import { Search, Upload, X, Loader2 } from 'lucide-react'; // Added Loader2 for loading state
-// import { useState, useEffect } from 'react';
-// import { useRouter } from 'next/navigation';
-// import { useDispatch, useSelector } from 'react-redux';
-// import { GrOverview } from 'react-icons/gr';
-// import { AiOutlineMessage, AiOutlineMail, AiOutlineCalendar } from 'react-icons/ai';
-// import { BiCommentCheck, BiMap } from 'react-icons/bi';
-// import { BsTelephone } from 'react-icons/bs';
-// import { CgFileDocument } from 'react-icons/cg';
-// import { FaVideo } from 'react-icons/fa';
-// import { RiArrowDropDownLine } from 'react-icons/ri';
-
-// // Import your WorkspaceModal and Redux actions
-// import WorkspaceModal from '../forms/WorkspaceModal'; 
-// import { getCandidateByWorkspace } from '../Reducer/CandidateSlice';
-// import CandidateChat from './CandidateChat';
-// // Adjust the path to wherever your CandidateSlice is located
-
-
-// export default function Candidates() {
-//   const router = useRouter();
-//   const dispatch = useDispatch();
-  
-//   // State for Workspace Selection & Popup
-//   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
-//   const [showWorkspaceModal, setShowWorkspaceModal] = useState(true); 
-//   const [isOpen, setIsOpen] = useState(false);
-//   const [selectedCandidate, setSelectedCandidate] = useState(null); // Track which candidate is clicked
-//   const [popupView, setPopupView] = useState('details');
-
-//   // Fetch Workspaces and Candidates from Redux
-//   const { workspaceData } = useSelector((state) => state?.auth || {});
-  
-//   // Grab candidate data and loading state from your CandidateSlice
-//   const { candidate, loading } = useSelector((state) => state?.candidate || {});
-
-//   // Safely extract the candidate array from the API payload 
-//   // (Adjust `.data` or `.result.data` based on your exact API response structure)
-//   const candidateList = candidate?.data?.formDto || candidate?.result?.data || [];
-//   console.log("candidateList",candidateList);
-  
-//   const handleSelectWorkspace = (workspaceId) => {
-//     setSelectedWorkspace(workspaceId);
-//     setShowWorkspaceModal(false);
-    
-//     console.log("Fetching candidates for Workspace ID:", workspaceId);
-    
-//     // Dispatch the API call. Assuming the API expects an object like { workspaceId: id }
-//     // dispatch(getCandidateByWorkspace({ workspaceId: workspaceId }));
-//     dispatch(getCandidateByWorkspace({ id: workspaceId }))
-
-//   };
-
-//   // Helper function to assign colors based on stage/status (fallback if backend doesn't provide colors)
-//   const getStageColor = (stage) => {
-//     const stageStr = (stage || '').toLowerCase();
-//     if (stageStr.includes('interview')) return 'bg-[#E6D6FF] text-[#8624F0] dark:bg-[#2d1a4d] dark:text-[#c084fc]';
-//     if (stageStr.includes('screen')) return 'bg-[#FFF4DE] text-[#FFA800] dark:bg-[#3d2e1a] dark:text-[#fbbf24]';
-//     if (stageStr.includes('shortlist')) return 'bg-[#ECFCE5] text-[#25852F] dark:bg-[#1a3d1a] dark:text-[#4ade80]';
-//     if (stageStr.includes('reject')) return 'bg-[#FFECEC] text-[#F53D6B] dark:bg-[#3d1a1a] dark:text-[#f87171]';
-//     return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'; // default
-//   };
-
-  
-//   return (
-//     <div className="space-y-6 rounded-[20px] p-8" style={{ background: 'var(--bg-card)' }}>
-//       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-//         <div>
-//           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Candidates</h1>
-//           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Recent candidates who haven't progressed yet.</p>
-//         </div>
-//         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-//           <div className="relative w-full sm:w-[300px]">
-//             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
-//             <input
-//               type="text"
-//               placeholder="Search"
-//               disabled={!selectedWorkspace}
-//               className="w-full pl-10 pr-4 py-3 rounded-[10px] text-sm outline-none focus:ring-2 ring-purple-100 disabled:opacity-50"
-//               style={{ background: 'var(--bg-main)', color: 'var(--text-primary)' }}
-//             />
-//           </div>
-//           <button
-//             onClick={() => router.push('/import')}
-//             disabled={!selectedWorkspace}
-//             className="cursor-pointer w-full sm:w-auto bg-[#8624F0] text-white px-6 py-3 rounded-[10px] font-bold flex items-center justify-center gap-2 hover:bg-[#6c1dc0] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-//           >
-//             <Upload size={18} /> Import Candidates
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* Conditionally Render Content */}
-//       {!selectedWorkspace ? (
-//         <div className="rounded-[20px] py-20 flex flex-col items-center justify-center text-center border-2 border-dashed" style={{ borderColor: 'var(--border-color)' }}>
-//           <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-[#8624F0]/10 text-[#8624F0]">
-//             <Search size={24} />
-//           </div>
-//           <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>No Workspace Selected</h3>
-//           <p className="text-sm max-w-sm" style={{ color: 'var(--text-secondary)' }}>
-//             Please select a workspace from the menu to view its candidates.
-//           </p>
-//           <button 
-//             onClick={() => setShowWorkspaceModal(true)}
-//             className="mt-6 px-6 py-2 bg-[#8624F0] text-white rounded-[8px] font-medium hover:bg-[#6c1dc0] transition-colors"
-//           >
-//             Select Workspace
-//           </button>
-//         </div>
-//       ) : loading ? (
-//         <div className="rounded-[20px] py-20 flex flex-col items-center justify-center">
-//           <Loader2 className="w-8 h-8 animate-spin text-[#8624F0] mb-4" />
-//           <p style={{ color: 'var(--text-secondary)' }}>Loading candidates...</p>
-//         </div>
-//       ) : candidateList.length === 0 ? (
-//         <div className="rounded-[20px] py-20 flex flex-col items-center justify-center text-center border border-dashed" style={{ borderColor: 'var(--border-color)' }}>
-//           <p style={{ color: 'var(--text-secondary)' }}>No candidates found for this workspace yet.</p>
-//         </div>
-//       ) : (
-//         <div className="rounded-[20px] py-6 overflow-hidden" style={{ background: 'var(--bg-card)' }}>
-//           <div className="overflow-x-auto">
-//             <table className="w-full min-w-[900px]">
-//               <thead>
-//                 <tr className="text-left text-xs uppercase" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>
-//                   <th className="pb-4 font-bold pl-2">Candidate</th>
-//                   <th className="pb-4 font-bold">Email</th>
-//                   <th className="pb-4 font-bold">Form Name</th>
-//                   <th className="pb-4 font-bold text-center">Form Stage</th>
-//                   <th className="pb-4 font-bold">Created</th>
-//                   <th className="pb-4 font-bold">Form Type</th>
-//                 </tr>
-//               </thead>
-//              <tbody>
-//                 {candidateList.map((cand) => {
-//                   // Since a candidate might submit multiple forms, we grab the first/latest one for the table row
-//                   const latestSubmission = cand.formSubmissionDto?.[0];
-//                   const formTitle = latestSubmission?.form?.title || "No Form Associated";
-                  
-//                   // Stage isn't explicitly defined by name in this payload (currentStageId is null), so we use a fallback
-//                   const currentStage = latestSubmission?.currentStageId ? `Stage ${latestSubmission.currentStageId}` : "Applied";
-                  
-//                   // Format the createdAt date nicely
-//                   const formattedDate = cand.createdAt 
-//                     ? new Date(cand.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-//                     : 'N/A';
-
-//                   return (
-//                     <tr
-//                       key={cand.id}
-//                       className="transition-colors hover:opacity-80"
-//                       style={{ borderBottom: '1px solid var(--border-color)' }}
-//                     >
-//                       <td
-//                         className="py-4 pl-2 text-sm font-bold cursor-pointer hover:text-[#8624F0]"
-//                         style={{ color: 'var(--text-primary)' }}
-//                         onClick={() => {
-//                           setSelectedCandidate(cand);
-//                           setIsOpen(true);
-//                         }}
-//                       >
-//                         {cand.fullName || "Unknown"}
-//                       </td>
-//                       <td className="py-4 text-sm" style={{ color: 'var(--text-primary)' }}>
-//                         {cand.email || "N/A"}
-//                       </td>
-//                       <td className="py-4 text-sm max-w-[250px] truncate pr-4 font-bold" style={{ color: 'var(--text-primary)' }}>
-//                         {formTitle}
-//                       </td>
-//                       <td className="py-4 text-center">
-//                         <span className={`px-4 py-1.5 rounded-full text-xs font-bold inline-block w-[100px] ${getStageColor(currentStage)}`}>
-//                           {currentStage}
-//                         </span>
-//                       </td>
-//                       <td className="py-4 text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-//                         {formattedDate}
-//                       </td>
-//                       <td className="py-4 text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-//                         Application
-//                       </td>
-//                     </tr>
-//                   );
-//                 })}
-//               </tbody>
-//             </table>
-//           </div>
-//         </div>
-//       )}
-
-//       {/* Candidate Detail Popup */}
-//       {isOpen && (
-//         <div className="popup-overlay">
-//           <div className="popup-content" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-//             {/* <button
-//               className="close-btn"
-//               onClick={() => setIsOpen(false)}
-//               style={{ color: 'var(--text-secondary)' }}
-//             >
-//               <X size={18} />
-//             </button> */}
-//             {popupView === 'details' && (
-//                 <button
-//                   className="close-btn"
-//                   onClick={() => setIsOpen(false)}
-//                   style={{ color: 'var(--text-secondary)' }}
-//                 >
-//                   <X size={18} />
-//                 </button>
-//             )}
-//             <div className="pt-8">
-//               {popupView === 'details' ? (
-//                 <>
-//                 <div className="poptop flex justify-between items-center pb-8 mb-8" style={{ borderBottom: '1px solid var(--border-color)' }}>
-            
-//                 <div className="poptop_wrap flex items-center gap-3">
-//                   <div className="bg-[#8734FB] w-[58px] h-[58px] rounded-full flex justify-center items-center">
-//                     <p className="text-white text-[16px] font-medium">
-//                       {/* Safely get initials from fullName */}
-//                       {(selectedCandidate?.fullName || "C").substring(0, 2).toUpperCase()}
-//                     </p>
-//                   </div>
-//                   <div className="text-left">
-//                     <h3 className="text-[20px] leading-[24px] font-medium" style={{ color: 'var(--text-primary)' }}>
-//                       {selectedCandidate?.fullName}
-//                     </h3>
-//                     <p className="text-[15px]" style={{ color: 'var(--text-secondary)' }}>Candidate</p>
-//                   </div>
-//                 </div>
-//                 <div className="flex items-center gap-2">
-//                   {/* Action buttons */}
-//                   <button className="w-[45px] h-[45px] bg-[#8624F0] rounded-[14px] flex justify-center items-center cursor-pointer">
-//                     <GrOverview className="text-[20px] text-white" />
-//                   </button>
-//                   <button 
-//                   onClick={() => setPopupView('chat')}
-//                   className="w-[45px] h-[45px] bg-[#AAAAAA] rounded-[14px] flex justify-center items-center cursor-pointer">
-//                     <AiOutlineMessage className="text-[20px] text-white" />
-//                   </button>
-//                   <button className="w-[45px] h-[45px] bg-[#AAAAAA] rounded-[14px] flex justify-center items-center cursor-pointer">
-//                     <BiCommentCheck className="text-[20px] text-white" />
-//                   </button>
-//                 </div>
-//               </div>
-//                 </>
-//               ):(
-//                 <CandidateChat 
-//                   candidate={selectedCandidate} 
-//                   onBack={() => setPopupView('details')} 
-//                 />
-//               )}
-              
-              
-//               {/* ... The rest of your Popup Content (You can map selectedCandidate fields here too!) ... */}
-             
-//               <div className="popmid">
-//                  <div className="grid grid-cols-2 gap-4 mb-6">
-//                    <div className="flex items-center gap-4">
-//                      <AiOutlineMail className="text-[#ADADAD] text-[24px]" />
-//                      <div className="text-left">
-//                        <h3 className="text-[12px] leading-[16px]" style={{ color: 'var(--text-secondary)' }}>Email</h3>
-//                        <p className="text-[17px]" style={{ color: 'var(--text-primary)' }}>{selectedCandidate?.email}</p>
-//                      </div>
-//                    </div>
-//                    <div className="flex items-center gap-4">
-//                      <BsTelephone className="text-[#ADADAD] text-[24px]" />
-//                      <div className="text-left">
-//                        <h3 className="text-[12px] leading-[16px]" style={{ color: 'var(--text-secondary)' }}>Phone</h3>
-//                        <p className="text-[17px]" style={{ color: 'var(--text-primary)' }}>+1 (555) 123-4567</p>
-//                      </div>
-//                    </div>
-//                    <div className="flex items-center gap-4">
-//                      <BiMap className="text-[#ADADAD] text-[24px]" />
-//                      <div className="text-left">
-//                        <h3 className="text-[12px] leading-[16px]" style={{ color: 'var(--text-secondary)' }}>Location</h3>
-//                        <p className="text-[17px]" style={{ color: 'var(--text-primary)' }}>San Francisco, CA</p>
-//                      </div>
-//                    </div>
-//                    <div className="flex items-center gap-4">
-//                      <AiOutlineCalendar className="text-[#ADADAD] text-[24px]" />
-//                      <div className="text-left">
-//                        <h3 className="text-[12px] leading-[16px]" style={{ color: 'var(--text-secondary)' }}>Applied</h3>
-//                        <p className="text-[17px]" style={{ color: 'var(--text-primary)' }}>28/01/2026</p>
-//                      </div>
-//                    </div>
-//                  </div>
-
-//                  <div className="mb-10">
-//                    <div className="grid grid-cols-3 gap-4 mb-4">
-//                      <div className="border-[#DCBCFF] border bg-[#F7EFFF] dark:bg-[#2d1a4d] dark:border-[#4a2d6b] p-4 text-left rounded-[10px]">
-//                        <h3 className="text-[#9A58E2] text-[12px] pb-1">Current Stage</h3>
-//                        <p className="text-[#660EC4] dark:text-[#c084fc] text-[18px] font-semibold">Interview</p>
-//                      </div>
-//                      <div className="border-[#FFE6B8] border bg-[#FFEFD2] dark:bg-[#3d2e1a] dark:border-[#6b4a1a] p-4 text-left rounded-[10px]">
-//                        <h3 className="text-[#767600] dark:text-[#fbbf24] text-[12px] pb-1">Source</h3>
-//                        <p className="text-[#695C0D] dark:text-[#fbbf24] text-[18px] font-semibold">Referral</p>
-//                      </div>
-//                      <div className="p-4 text-left rounded-[10px]" style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)' }}>
-//                        <h3 className="text-[12px] pb-1" style={{ color: 'var(--text-secondary)' }}>Experience</h3>
-//                        <p className="text-[18px] font-semibold" style={{ color: 'var(--text-primary)' }}>8 years</p>
-//                      </div>
-//                    </div>
-//                    <div className="border-[#AEFFB7] border bg-[#F1FDF4] dark:bg-[#1a3d1a] dark:border-[#2d6b2d] p-4 text-left rounded-[10px]">
-//                      <h3 className="text-[#25852F] dark:text-[#4ade80] text-[12px] pb-1">Referred by</h3>
-//                      <p className="text-[#25852F] dark:text-[#4ade80] text-[18px] font-semibold">Mike Johnson</p>
-//                    </div>
-//                  </div>
-
-//                  <div className="flex items-center gap-4 mb-4">
-//                    <p className="text-[14px] font-medium uppercase" style={{ color: 'var(--text-secondary)' }}>Question 1</p>
-//                    <span className="text-[14px] font-medium" style={{ color: 'var(--text-primary)' }}>UXStudio is hiring for a UI/UX Designer</span>
-//                  </div>
-//                  <div className="flex items-center gap-4">
-//                    <p className="text-[14px] font-medium uppercase" style={{ color: 'var(--text-secondary)' }}>Question 1</p>
-//                  <span className="text-[14px] font-medium" style={{ color: 'var(--text-primary)' }}>UXStudio is hiring for a UI/UX Designer</span>
-//                  </div>
-//               </div>
-
-//                 <div className="popbottom mt-8">
-//                  <div className="flex gap-4 mb-4">
-//                    <button className="flex items-center justify-center gap-2 border border-[#761ED3] text-[#761ED3] hover:text-white text-[15px] leading-[40px] rounded-[8px] w-full cursor-pointer hover:bg-[#761ED3] transition-colors">
-//                      <CgFileDocument className="text-[18px]" /> View Resume
-//                    </button>
-//                    <button className="flex items-center justify-center gap-2 border border-[#761ED3] text-[#761ED3] hover:text-white text-[15px] leading-[40px] rounded-[8px] w-full cursor-pointer hover:bg-[#761ED3] transition-colors">
-//                      <FaVideo className="text-[18px]" /> Watch Video
-//                    </button>
-//                  </div>
-//                 <button className="flex items-center justify-center gap-1 border bg-[#210043] dark:bg-[#6d28d9] text-white text-[14px] leading-[40px] rounded-[8px] w-full cursor-pointer hover:bg-[#761ED3] transition-colors">
-//                  <RiArrowDropDownLine className="text-[20px]" /> Shortlisted
-//                  </button>
-//                </div>
-
-//             </div>
-//           </div>
-//         </div>
-//       )}
-
-//       {/* Workspace Modal */}
-//       <WorkspaceModal 
-//         isOpen={showWorkspaceModal} 
-//         onClose={() => {
-//             if (selectedWorkspace) setShowWorkspaceModal(false);
-//         }} 
-//         workspaces={workspaceData?.data || []}
-//         onSelect={handleSelectWorkspace}
-//       />
-//     </div>
-//   );
-// }
-
-
-
 'use client';
 
-import { Search, Upload, X, Loader2, Filter, ChevronLeft, ChevronRight, ArrowUpDown, Eye } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import {
+    Search, Plus, MoreVertical, Pencil, Trash2, X, Loader2, User, GripVertical, Eye
+} from 'lucide-react';
+import { getCandidateByWorkspace } from '../Reducer/CandidateSlice';
+import { workspaceList } from '../Reducer/WorkspaceSlice';
+import {
+    getWorkspaceStages,
+    createWorkspaceStage,
+    updateWorkspaceStage,
+    deleteWorkspaceStage,
+    updateCandidateStage,
+    setLocalStage,
+    rollbackLocalStage,
+    clearStages,
+} from '../Reducer/KanbanSlice';
+import WorkspaceModal from '../forms/WorkspaceModal';
+import { toast } from 'react-toastify';
+import CandidateChat from './CandidateChat';
+
 import { GrOverview } from 'react-icons/gr';
 import { AiOutlineMessage, AiOutlineMail, AiOutlineCalendar } from 'react-icons/ai';
 import { BiCommentCheck, BiMap } from 'react-icons/bi';
@@ -365,645 +28,674 @@ import { BsTelephone } from 'react-icons/bs';
 import { CgFileDocument } from 'react-icons/cg';
 import { FaVideo } from 'react-icons/fa';
 import { RiArrowDropDownLine } from 'react-icons/ri';
+// ─── Color palette for stages ─────────────────────────────────────────────────
+const STAGE_COLORS = [
+    { bg: '#EDE9FE', text: '#7C3AED', border: '#C4B5FD', dot: '#7C3AED' },
+    { bg: '#DBEAFE', text: '#1D4ED8', border: '#93C5FD', dot: '#1D4ED8' },
+    { bg: '#D1FAE5', text: '#065F46', border: '#6EE7B7', dot: '#065F46' },
+    { bg: '#FEF3C7', text: '#92400E', border: '#FCD34D', dot: '#92400E' },
+    { bg: '#FCE7F3', text: '#9D174D', border: '#F9A8D4', dot: '#9D174D' },
+    { bg: '#E0F2FE', text: '#0369A1', border: '#7DD3FC', dot: '#0369A1' },
+    { bg: '#F3F4F6', text: '#374151', border: '#D1D5DB', dot: '#374151' },
+];
+const APPLIED_COLOR = { bg: '#ECFCE5', text: '#065F46', border: '#6EE7B7', dot: '#25852F' };
 
-// Import your WorkspaceModal and Redux actions
-import WorkspaceModal from '../forms/WorkspaceModal'; 
-import { getCandidateByWorkspace } from '../Reducer/CandidateSlice';
-import { workspaceList } from '../Reducer/WorkspaceSlice';
-import CandidateChat from './CandidateChat';
-import api from '../Reducer/api';
-
-export default function Candidates() {
-  const router = useRouter();
-  const dispatch = useDispatch();
-  
-  // State for Workspace Selection & Popup
-  const [selectedWorkspace, setSelectedWorkspace] = useState(null);
-  const [showWorkspaceModal, setShowWorkspaceModal] = useState(true); 
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState(null); 
-  const [popupView, setPopupView] = useState('details');
-  const [stageOverrides, setStageOverrides] = useState({});
-  const [stages, setStages] = useState([]);
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
-  const itemsPerPage = 7;
-
-  // Fetch Workspaces and Candidates from Redux
-  const { workspaceData } = useSelector((state) => state?.workspace || {});
-  const { candidate, loading } = useSelector((state) => state?.candidate || {});
-
-  useEffect(() => {
-    dispatch(workspaceList());
-  }, [dispatch]);
-
-  // Fetch Stages
-  useEffect(() => {
-    if (selectedWorkspace) {
-      api.get(`/stages?workspaceId=${selectedWorkspace}`).then(res => {
-        if (res.data?.data) {
-          setStages(res.data.data);
-        }
-      }).catch(err => console.error(err));
-    }
-  }, [selectedWorkspace]);
-
-  // Auto-Select Primary Workspace Logic
-  useEffect(() => {
-    if (workspaceData?.data && !selectedWorkspace) {
-      const workspaces = workspaceData.data;
-      const primaryId = localStorage.getItem('primaryWorkspaceId');
-      
-      if (workspaces.length === 1) {
-        handleSelectWorkspace(workspaces[0].id);
-      } else if (workspaces.length > 1 && primaryId && workspaces.find(w => w.id == primaryId)) {
-        handleSelectWorkspace(primaryId);
-      } else {
-        setShowWorkspaceModal(true);
-      }
-    }
-  }, [workspaceData]);
-
-  // --- NEW FLATTENING LOGIC BASED ON YOUR JSON ---
-  const rawForms = candidate?.data?.formDto || [];
-  const candidateList = [];
-
-  rawForms.forEach((form) => {
-    const submissions = form.submissions || [];
-    console.log("submissions",submissions);
-    
-    submissions.forEach((sub) => {
-      if (sub.candidate) {
-        // Create a flat object combining candidate info and form info
-        candidateList.push({
-          id: sub.candidate.id, // Candidate ID
-          submissionId: sub.id, // Submission ID
-          fullName: sub.candidate.fullName,
-          email: sub.candidate.email,
-          createdAt: sub.candidate.createdAt,
-          submittedAt: sub.submittedAt,
-          formTitle: form.title, // Grab the title from the parent form object
-          formId: form.id,               // <--- ADD THIS
-          workspaceId: form.workspaceId, // <--- ADD THIS
-          currentStageId: sub.currentStageId,
-          currentStage: stageOverrides[sub.id] || (stages?.find(s => s.id === sub.currentStageId)?.name || (sub.currentStageId ? `Stage ${sub.currentStageId}` : "Applied")),
-          rawCandidateData: sub.candidate, // Keep the raw data just in case
-          answers: sub.formSubmissionAnswerDto || [],
-          fields: form.fields || []
-        });
-      }
-    });
-  });
-
-  const handleSelectWorkspace = (workspaceId) => {
-    setSelectedWorkspace(workspaceId);
-    setShowWorkspaceModal(false);
-    console.log("Fetching candidates for Workspace ID:", workspaceId);
-    dispatch(getCandidateByWorkspace({ id: workspaceId }));
-  };
-
-  // Reset to page 1 when search or filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, filterStatus]);
-
-  const filteredCandidates = candidateList.filter(cand => {
-    const searchLower = searchQuery.toLowerCase();
-    
-    const matchesSearch = 
-      (cand.fullName || '').toLowerCase().includes(searchLower) ||
-      (cand.email || '').toLowerCase().includes(searchLower) ||
-      (cand.formTitle || '').toLowerCase().includes(searchLower);
-    
-    const matchesFilter = filterStatus === 'all' || (cand.currentStage || '').toLowerCase().includes(filterStatus.toLowerCase());
-    
-    return matchesSearch && matchesFilter;
-  });
-
-  const sortedCandidates = [...filteredCandidates].sort((a, b) => {
-    if (!sortConfig.key) return 0;
-    
-    if (sortConfig.key === 'name') {
-      const valA = a.fullName || '';
-      const valB = b.fullName || '';
-      return sortConfig.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-    }
-    
-    if (sortConfig.key === 'date') {
-      const dateA = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
-      const dateB = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
-      return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
-    }
-    
-    return 0;
-  });
-
-  const totalPages = Math.ceil(sortedCandidates.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = sortedCandidates.slice(startIndex, startIndex + itemsPerPage);
-
-  const handlePrevPage = () => { if (currentPage > 1) setCurrentPage(currentPage - 1); };
-  const handleNextPage = () => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); };
-
-  const handleSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
-    else if (sortConfig.key === key && sortConfig.direction === 'desc') { key = null; direction = 'asc'; }
-    setSortConfig({ key, direction });
-  };
-
-  const getStageColor = (stage) => {
-    const stageStr = (stage || '').toLowerCase();
-    if (stageStr.includes('interview')) return 'bg-[#E6D6FF] text-[#8624F0] dark:bg-[#2d1a4d] dark:text-[#c084fc]';
-    if (stageStr.includes('screen')) return 'bg-[#FFF4DE] text-[#FFA800] dark:bg-[#3d2e1a] dark:text-[#fbbf24]';
-    if (stageStr.includes('shortlist')) return 'bg-[#ECFCE5] text-[#25852F] dark:bg-[#1a3d1a] dark:text-[#4ade80]';
-    if (stageStr.includes('reject')) return 'bg-[#FFECEC] text-[#F53D6B] dark:bg-[#3d1a1a] dark:text-[#f87171]';
-    return 'bg-[#ECFCE5] text-[#25852F] dark:bg-[#1a3d1a] dark:text-[#4ade80]'; // default to a green 'Applied' color
-  };
-
-  return (
-    <div className="flex flex-col h-[calc(100vh-140px)] rounded-[20px] p-4 md:p-8 overflow-y-auto" style={{ background: 'var(--bg-card)' }}>
-      <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Candidates</h1>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Recent candidates who haven't progressed yet.</p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          <div className="relative w-full sm:w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={16} className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search Name, Email, Form..."
-              disabled={!selectedWorkspace}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8624f0] focus:border-transparent transition-colors text-sm disabled:opacity-50"
-              style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
-            />
-          </div>
-          
-          <div className="relative w-full sm:w-auto">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Filter size={16} className="text-gray-400" />
-            </div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              disabled={!selectedWorkspace}
-              className="w-full sm:w-auto pl-10 pr-8 py-2 border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#8624f0] focus:border-transparent transition-colors text-sm cursor-pointer disabled:opacity-50"
-              style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
-            >
-              <option value="all">All Stages</option>
-              <option value="applied">Applied</option>
-              <option value="screen">Screen</option>
-              <option value="interview">Interview</option>
-              <option value="shortlist">Shortlisted</option>
-              <option value="reject">Rejected</option>
-            </select>
-          </div>
-
-          <button
-            onClick={() => router.push('/import')}
-            disabled={!selectedWorkspace}
-            className="cursor-pointer w-full sm:w-auto bg-[#8624F0] text-white px-5 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-[#6c1dc0] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-          >
-            <Upload size={18} /> Import
-          </button>
-        </div>
-      </div>
-
-      {/* Conditionally Render Content */}
-      <div className="rounded-[20px] border flex flex-col" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)' }}>
-        {!selectedWorkspace ? (
-          <div className="py-20 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-[#8624F0]/10 text-[#8624F0]">
-              <Search size={24} />
-            </div>
-            <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>No Workspace Selected</h3>
-            <p className="text-sm max-w-sm" style={{ color: 'var(--text-secondary)' }}>
-              Please select a workspace from the menu to view its candidates.
-            </p>
-            <button 
-              onClick={() => setShowWorkspaceModal(true)}
-              className="mt-6 px-6 py-2 bg-[#8624F0] text-white rounded-[8px] font-medium hover:bg-[#6c1dc0] transition-colors"
-            >
-              Select Workspace
-            </button>
-          </div>
-        ) : loading ? (
-          <div className="py-20 flex flex-col items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-[#8624F0] mb-4" />
-            <p style={{ color: 'var(--text-secondary)' }}>Loading candidates...</p>
-          </div>
-        ) : candidateList.length === 0 ? (
-          <div className="py-20 flex flex-col items-center justify-center text-center">
-            <p style={{ color: 'var(--text-secondary)' }}>No candidates found for this workspace yet.</p>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto p-4">
-              <table className="w-full border-collapse border" style={{ borderColor: 'var(--border-color)' }}>
-                <thead>
-                  <tr style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-                    <th className="py-4 px-4 text-center border font-semibold whitespace-nowrap" style={{ borderColor: 'var(--border-color)' }}>
-                      <div className="flex items-center justify-center gap-2">
-                        Candidate
-                      </div>
-                    </th>
-                    <th className="py-4 px-4 text-center border font-semibold whitespace-nowrap" style={{ borderColor: 'var(--border-color)' }}>Email</th>
-                    <th className="py-4 px-4 text-center border font-semibold whitespace-nowrap" style={{ borderColor: 'var(--border-color)' }}>Form Name</th>
-                    <th className="py-4 px-4 text-center border font-semibold whitespace-nowrap" style={{ borderColor: 'var(--border-color)' }}>Form Stage</th>
-                    <th className="py-4 px-4 text-center border font-semibold whitespace-nowrap cursor-pointer hover:bg-gray-50/10 transition-colors" style={{ borderColor: 'var(--border-color)' }} onClick={() => handleSort('date')}>
-                      <div className="flex items-center justify-center gap-2">
-                        Applied On
-                        <ArrowUpDown size={14} className={sortConfig.key === 'date' ? 'text-[#8624f0]' : 'text-gray-400'} />
-                      </div>
-                    </th>
-                    <th className="py-4 px-4 text-center border font-semibold whitespace-nowrap" style={{ borderColor: 'var(--border-color)' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentItems.length > 0 ? (
-                    currentItems.map((cand, index) => {
-                      const formattedDate = cand.submittedAt 
-                        ? new Date(cand.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                        : 'N/A';
-
-                      return (
-                        <tr
-                          key={cand.submissionId || index} 
-                          className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
-                          onClick={() => {
-                              setSelectedCandidate(cand);
-                              setPopupView('details');
-                              setIsOpen(true);
-                          }}
-                        >
-                          <td
-                            className="py-4 px-4 text-center border align-middle font-medium whitespace-nowrap group-hover:text-[#8624F0]"
-                            style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                          >
-                            {cand.fullName || "Unknown"}
-                          </td>
-                          <td className="py-4 px-4 text-center border align-middle whitespace-nowrap" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
-                            {cand.email || "N/A"}
-                          </td>
-                          <td className="py-4 px-4 text-center border align-middle font-medium whitespace-nowrap" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
-                            {cand.formTitle}
-                          </td>
-                          <td className="py-4 px-4 text-center border align-middle whitespace-nowrap" style={{ borderColor: 'var(--border-color)' }}>
-                            <span className={`px-4 py-1.5 rounded-full text-xs font-bold inline-block w-[100px] ${getStageColor(cand.currentStage)}`}>
-                              {cand.currentStage}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-center border align-middle text-sm whitespace-nowrap" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
-                            {formattedDate}
-                          </td>
-                          <td className="py-4 px-4 text-center border align-middle whitespace-nowrap" style={{ borderColor: 'var(--border-color)' }}>
-                            <button 
-                                className="p-2 text-[#8624F0] bg-[#8624F0]/10 hover:bg-[#8624F0]/20 rounded-full transition-colors"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedCandidate(cand);
-                                    setPopupView('details');
-                                    setIsOpen(true);
-                                }}
-                            >
-                                <Eye size={18} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan="5" className="py-8 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        No candidates found matching your search.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination Controls */}
-            {filteredCandidates.length >= 0 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
-                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  Showing <span className="font-semibold text-gray-800 dark:text-gray-200">{startIndex + 1}</span> to <span className="font-semibold text-gray-800 dark:text-gray-200">{Math.min(startIndex + itemsPerPage, filteredCandidates.length)}</span> of <span className="font-semibold text-gray-800 dark:text-gray-200">{filteredCandidates.length}</span> entries
-                </span>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 1}
-                    className="cursor-pointer p-2 border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`cursor-pointer w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
-                          currentPage === page 
-                            ? 'bg-[#8624f0] text-white' 
-                            : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }`}
-                        style={currentPage !== page ? { color: 'var(--text-primary)' } : {}}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button 
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                    className="cursor-pointer p-2 border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Candidate Detail Popup (Right Side Drawer) */}
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex justify-end">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Drawer Content */}
-          <div 
-            className="relative w-full max-w-[500px] h-full shadow-2xl overflow-y-auto transform transition-transform duration-300 flex flex-col"
-            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', animation: 'slideInRight 0.3s ease-out forwards' }}
-          >
-            <div className="p-6 md:p-8 flex-1 flex flex-col">
-                {popupView === 'details' && (
-                    <div className="flex justify-end mb-2 -mt-2 -mr-2">
-                        <button
-                          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                          onClick={() => setIsOpen(false)}
-                          style={{ color: 'var(--text-secondary)' }}
-                        >
-                          <X size={20} />
-                        </button>
-                    </div>
-                )}
-                
-                <div className="pt-2">
-                  <style>{`
-                    @keyframes slideInRight {
-                      from { transform: translateX(100%); }
-                      to { transform: translateX(0); }
-                    }
-                  `}</style>
-              {popupView === 'details' ? (
-                <>
-                <div className="poptop flex justify-between items-center pb-8 mb-8" style={{ borderBottom: '1px solid var(--border-color)' }}>
-            
-                <div className="poptop_wrap flex flex-col gap-2 text-left">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-[22px] leading-[28px] font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {selectedCandidate?.formTitle || "Application Form"}
-                    </h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStageColor(stageOverrides[selectedCandidate?.submissionId] || selectedCandidate?.currentStage)}`}>
-                      {stageOverrides[selectedCandidate?.submissionId] || selectedCandidate?.currentStage || 'Applied'}
-                    </span>
-                  </div>
-                  <p className="text-[14px]" style={{ color: 'var(--text-secondary)' }}>
-                    Applied: {selectedCandidate?.submittedAt ? new Date(selectedCandidate.submittedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button className="w-[45px] h-[45px] bg-[#8624F0] rounded-[14px] flex justify-center items-center cursor-pointer">
-                    <Eye className="text-[20px] text-white" />
-                  </button>
-                  <button 
-                  onClick={() => setPopupView('chat')}
-                  className="w-[45px] h-[45px] bg-[#AAAAAA] rounded-[14px] flex justify-center items-center cursor-pointer hover:bg-[#8624F0] transition-colors">
-                    <AiOutlineMessage className="text-[20px] text-white" />
-                  </button>
-                </div>
-              </div>
-                
-                 <div className="popmid">
-                   <div className="mb-10">
-                     <h3 className="text-[18px] font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Form Responses</h3>
-                     <div className="flex flex-col gap-4">
-                       {selectedCandidate?.fields && selectedCandidate.fields.length > 0 ? (
-                         [...selectedCandidate.fields].sort((a, b) => a.id - b.id).map((field) => {
-                           let answer = selectedCandidate?.answers?.find(a => a.fieldId === field.id);
-                           const fieldType = (field.formFieldType?.typeKey || field.formFieldType?.typeName || field.type || '').toLowerCase();
-                           
-                           const isFullName = fieldType.includes('name') || (field.label || '').toLowerCase().includes('name');
-                           const isEmail = fieldType.includes('email') || (field.label || '').toLowerCase().includes('email');
-
-                           if (!answer) {
-                             if (isFullName && (selectedCandidate?.fullName || selectedCandidate?.name)) {
-                               answer = { textValue: selectedCandidate.fullName || selectedCandidate.name };
-                             } else if (isEmail && selectedCandidate?.email) {
-                               answer = { textValue: selectedCandidate.email };
-                             } else {
-                               return null;
-                             }
-                           }
-
-                           let valueDisplay = answer.textValue || answer.numberValue || answer.dateValue || '';
-
-                           // Render different form elements based on type
-                           let fieldElement = null;
-
-                           if (fieldType === 'long-text' || fieldType === 'textarea') {
-                             fieldElement = (
-                               <textarea 
-                                 readOnly 
-                                 value={valueDisplay} 
-                                 className="w-full px-4 py-3 border rounded-md outline-none min-h-[100px] resize-none text-[14px]"
-                                 style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
-                               />
-                             );
-                           } else if (fieldType === 'file' || fieldType === 'image' || fieldType === 'pdf') {
-                             fieldElement = (
-                               <div className="w-full px-4 py-6 border-2 border-dashed rounded-md flex flex-col items-center justify-center gap-2" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)' }}>
-                                 {answer.imageUrl ? (
-                                   <>
-                                      <div className="w-10 h-10 rounded-full bg-[#8624F0]/10 flex items-center justify-center text-[#8624F0]">
-                                        <CgFileDocument size={20} />
-                                      </div>
-                                      <a href={answer.imageUrl} target="_blank" rel="noopener noreferrer" className="text-[#8624F0] hover:underline font-medium text-[14px]">View Uploaded File</a>
-                                   </>
-                                 ) : (
-                                   <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>No file uploaded</span>
-                                 )}
-                               </div>
-                             );
-                           } else if (fieldType === 'video') {
-                             fieldElement = (
-                               <div className="w-full px-4 py-6 border-2 border-dashed rounded-md flex flex-col items-center justify-center gap-2" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)' }}>
-                                 {answer.videoUrl ? (
-                                   <>
-                                      <div className="w-10 h-10 rounded-full bg-[#8624F0]/10 flex items-center justify-center text-[#8624F0]">
-                                        <FaVideo size={20} />
-                                      </div>
-                                      <a href={answer.videoUrl} target="_blank" rel="noopener noreferrer" className="text-[#8624F0] hover:underline font-medium text-[14px]">Watch Uploaded Video</a>
-                                   </>
-                                 ) : (
-                                   <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>No video uploaded</span>
-                                 )}
-                               </div>
-                             );
-                           } else if (fieldType === 'checkbox' || fieldType === 'multiple-choice' || fieldType === 'radio' || fieldType === 'dropdown') {
-                             // Assuming valueDisplay contains comma-separated options
-                             const options = typeof valueDisplay === 'string' ? valueDisplay.split(',').map(s => s.trim()).filter(Boolean) : [valueDisplay];
-                             fieldElement = (
-                               <div className="flex flex-col gap-3 mt-1">
-                                 {options.length > 0 ? options.map((opt, i) => (
-                                   <div key={i} className="flex items-center gap-3">
-                                     <input 
-                                       type={fieldType === 'checkbox' ? 'checkbox' : 'radio'} 
-                                       checked 
-                                       readOnly 
-                                       className="w-4 h-4 text-blue-600 border-gray-300 cursor-not-allowed" 
-                                     />
-                                     <span className="text-[14px]" style={{ color: 'var(--text-primary)' }}>{opt}</span>
-                                   </div>
-                                 )) : (
-                                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>N/A</span>
-                                 )}
-                               </div>
-                             );
-                           } else {
-                             // Default to standard input
-                             fieldElement = (
-                               <input 
-                                 type={fieldType === 'email' ? 'email' : fieldType === 'phone' || fieldType === 'number' ? 'number' : fieldType === 'date' ? 'date' : 'text'}
-                                 readOnly 
-                                 value={valueDisplay} 
-                                 placeholder="N/A"
-                                 className="w-full px-4 py-2.5 border rounded-md outline-none text-[14px]"
-                                 style={{ borderColor: 'var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)' }}
-                               />
-                             );
-                           }
-                           
-                           return (
-                             <div key={field.id} className="flex flex-col gap-2 w-full p-5 border rounded-[8px]" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-                               <label className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>
-                                 {field.label || 'Field'} {field.isRequired && <span className="text-red-500 ml-1">*</span>}
-                               </label>
-                               {fieldElement}
-                             </div>
-                           );
-                         })
-                       ) : (
-                         <p className="text-sm col-span-2" style={{ color: 'var(--text-secondary)' }}>No responses available.</p>
-                       )}
-                     </div>
-                   </div>
-
-                  <div className="popbottom mt-8">
-                   <div className="mb-2">
-                     <label className="text-[14px] font-semibold" style={{ color: 'var(--text-secondary)' }}>Change Stage:</label>
-                   </div>
-                   <div className="relative w-full">
-                      <select 
-                        value={selectedCandidate?.currentStageId || ''}
-                        onChange={async (e) => {
-                          const newStageId = e.target.value;
-                          const newStageName = e.target.options[e.target.selectedIndex].text;
-                          
-                          if (selectedCandidate?.submissionId && newStageId) {
-                            // Optimistic UI update
-                            setStageOverrides(prev => ({...prev, [selectedCandidate.submissionId]: newStageName}));
-                            setSelectedCandidate(prev => ({...prev, currentStageId: newStageId, currentStage: newStageName}));
-                            
-                            // Call API to save to backend
-                            try {
-                              await api.put('/candidate/workspace/stage/update', {
-                                submissionId: selectedCandidate.submissionId,
-                                stageId: parseInt(newStageId)
-                              });
-                            } catch (err) {
-                              console.error("Failed to update stage:", err);
-                              alert("Failed to update candidate stage. Please try again.");
-                            }
-                          }
-                        }}
-                        className="appearance-none flex items-center justify-between px-4 border bg-[#210043] dark:bg-[#6d28d9] text-white text-[14px] leading-[40px] rounded-[8px] w-full cursor-pointer hover:bg-[#761ED3] transition-colors outline-none"
-                      >
-                        <option value="" disabled>Select Stage</option>
-                        {stages && stages.length > 0 ? (
-                          stages.map(stage => (
-                            <option key={stage.id} value={stage.id}>{stage.name}</option>
-                          ))
-                        ) : (
-                          <>
-                            <option value="1">Applied</option>
-                            <option value="2">Screening</option>
-                            <option value="3">Interviewed</option>
-                            <option value="4">Shortlisted</option>
-                            <option value="5">Rejected</option>
-                          </>
-                        )}
-                      </select>
-                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white">
-                       <RiArrowDropDownLine className="text-[24px]" />
-                     </div>
-                   </div>
-                 </div>
-
-                </div>
-                </>
-              ):(
-                <CandidateChat 
-                  candidate={selectedCandidate} 
-                  onBack={() => setPopupView('details')} 
-                />
-              )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Workspace Modal */}
-      <WorkspaceModal 
-        isOpen={showWorkspaceModal} 
-        onClose={() => setShowWorkspaceModal(false)} 
-        workspaces={workspaceData?.data || []}
-        onSelect={handleSelectWorkspace}
-      />
-    </div>
-  );
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function getInitials(name) {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+function getAvatarColor(name) {
+    const colors = ['#8624F0', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4'];
+    if (!name) return colors[0];
+    return colors[name.charCodeAt(0) % colors.length];
+}
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// ─── Candidate Card ────────────────────────────────────────────────────────────
+function CandidateCard({ candidate, onDragStart, onCardClick }) {
+    const avatarColor = getAvatarColor(candidate.fullName);
+    return (
+        <div
+            draggable
+            onDragStart={(e) => onDragStart(e, candidate)}
+            onClick={() => onCardClick(candidate)}
+            className="bg-white rounded-[12px] p-4 mb-3 shadow-sm border border-gray-100 cursor-grab active:cursor-grabbing hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+            style={{ borderLeft: `3px solid ${avatarColor}` }}
+        >
+            <div className="flex items-start gap-3">
+                <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                    style={{ background: avatarColor }}
+                >
+                    {getInitials(candidate.fullName)}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-800 text-sm truncate">{candidate.fullName || 'Unknown'}</p>
+                    <p className="text-gray-500 text-xs truncate mt-0.5">{candidate.email}</p>
+                </div>
+                <GripVertical className="w-4 h-4 text-gray-300 group-hover:text-gray-400 flex-shrink-0 mt-0.5" />
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-2">
+                <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full truncate max-w-[140px]">
+                    {candidate.formTitle || 'Form'}
+                </span>
+                <span className="text-xs text-gray-400 flex-shrink-0">
+                    {formatDate(candidate.submittedAt || candidate.createdAt)}
+                </span>
+            </div>
+        </div>
+    );
+}
 
+// ─── Stage Column ──────────────────────────────────────────────────────────────
+function StageColumn({ stage, candidates, color, isApplied, onDrop, onDragOver, onDragLeave, onDragStart, onEditStage, onDeleteStage, onCardClick, isDragOver }) {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef(null);
 
+    useEffect(() => {
+        function handleOut(e) {
+            if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+        }
+        document.addEventListener('mousedown', handleOut);
+        return () => document.removeEventListener('mousedown', handleOut);
+    }, []);
 
+    return (
+        <div
+            className="flex flex-col rounded-[16px] min-w-[280px] max-w-[280px] transition-all duration-200"
+            style={{
+                background: isDragOver ? color.bg : 'var(--bg-card)',
+                border: `1.5px solid ${isDragOver ? color.border : 'var(--border-color)'}`,
+                boxShadow: isDragOver ? `0 0 0 2px ${color.border}` : undefined,
+            }}
+            onDrop={onDrop}
+            onDragOver={(e) => { e.preventDefault(); onDragOver(e, stage.id); }}
+            onDragLeave={onDragLeave}
+        >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-4 pb-3">
+                <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color.dot }} />
+                    <span className="font-bold text-sm" style={{ color: color.dot }}>{stage.name}</span>
+                    <span
+                        className="text-xs font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: color.bg, color: color.dot, border: `1px solid ${color.border}` }}
+                    >
+                        {candidates.length}
+                    </span>
+                </div>
+                {!isApplied && (
+                    <div className="relative" ref={menuRef}>
+                        <button
+                            onClick={() => setMenuOpen(o => !o)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/5 transition-colors cursor-pointer"
+                        >
+                            <MoreVertical className="w-4 h-4 text-gray-400" />
+                        </button>
+                        {menuOpen && (
+                            <div className="absolute right-0 top-8 w-36 bg-white rounded-[10px] shadow-xl border border-gray-100 z-50 overflow-hidden">
+                                <button
+                                    onClick={() => { setMenuOpen(false); onEditStage(stage); }}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
+                                >
+                                    <Pencil className="w-3.5 h-3.5" /> Edit Stage
+                                </button>
+                                <button
+                                    onClick={() => { setMenuOpen(false); onDeleteStage(stage); }}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" /> Delete Stage
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
+            {/* Cards area */}
+            <div className="flex-1 px-3 pb-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+                {candidates.length === 0 ? (
+                    <div
+                        className="h-20 rounded-[10px] border-2 border-dashed flex items-center justify-center text-xs"
+                        style={{ borderColor: isDragOver ? color.border : 'var(--border-color)', color: color.dot, opacity: isDragOver ? 0.8 : 0.4 }}
+                    >
+                        {isDragOver ? 'Drop here' : 'No candidates'}
+                    </div>
+                ) : (
+                    candidates.map(c => (
+                        <CandidateCard key={c.submissionId} candidate={c} onDragStart={onDragStart} onCardClick={onCardClick} />
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}
 
+// ─── Modal Component ───────────────────────────────────────────────────────────
+function Modal({ title, onClose, children }) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative bg-white rounded-[20px] shadow-2xl w-full max-w-md mx-4 p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+                    <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer">
+                        <X className="w-4 h-4 text-gray-500" />
+                    </button>
+                </div>
+                {children}
+            </div>
+        </div>
+    );
+}
 
+// ─── Main Page ─────────────────────────────────────────────────────────────────
+export default function Candidates() {
+    const dispatch = useDispatch();
 
+    // Redux state
+    const { workspaceData } = useSelector((state) => state?.workspace || {});
+    const { candidate, loading: candidateLoading } = useSelector((state) => state?.candidate || {});
+    const { stages, stageLoading, localStageMap } = useSelector((state) => state?.kanban || {});
 
+    // Local UI state
+    const [selectedWorkspace, setSelectedWorkspace] = useState(null);
+    const [showWorkspaceModal, setShowWorkspaceModal] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedFormFilter, setSelectedFormFilter] = useState('');
+    const [dragCandidate, setDragCandidate] = useState(null);
+    const [dragOverStage, setDragOverStage] = useState(null);
+    const [selectedCandidate, setSelectedCandidate] = useState(null);
+    const [popupView, setPopupView] = useState('details');
+    const [isOpen, setIsOpen] = useState(false);
+    // Stage modal states
+    const [showAddStage, setShowAddStage] = useState(false);
+    const [newStageName, setNewStageName] = useState('');
+    const [editStage, setEditStage] = useState(null);
+    const [editStageName, setEditStageName] = useState('');
+    const [deleteStageTarget, setDeleteStageTarget] = useState(null);
 
+    // Load workspaces on mount
+    useEffect(() => { dispatch(workspaceList()); }, [dispatch]);
 
+    // Auto-select workspace
+    useEffect(() => {
+        if (workspaceData?.data && !selectedWorkspace) {
+            const workspaces = workspaceData.data;
+            const primaryId = localStorage.getItem('primaryWorkspaceId');
+            if (workspaces.length === 1) {
+                handleSelectWorkspace(workspaces[0].id);
+            } else if (primaryId && workspaces.find(w => w.id == primaryId)) {
+                handleSelectWorkspace(primaryId);
+            } else {
+                setShowWorkspaceModal(true);
+            }
+        }
+    }, [workspaceData]);
 
+    const handleSelectWorkspace = (workspaceId) => {
+        setSelectedWorkspace(workspaceId);
+        setShowWorkspaceModal(false);
+        dispatch(clearStages());
+        dispatch(getCandidateByWorkspace({ id: workspaceId }));
+        dispatch(getWorkspaceStages(workspaceId));
+    };
 
+    // ─── Build flat candidate list from Redux ────────────────────────────────────
+    const rawForms = candidate?.data?.formDto || [];
+    const allCandidates = [];
+    rawForms.forEach(form => {
+        (form.submissions || []).forEach(sub => {
+            if (sub.candidate) {
+                // localStageMap overrides the server's stageMap value for optimistic updates
+                const stageId = (sub.submissionId in localStageMap)
+                    ? localStageMap[sub.submissionId]
+                    : (sub.id in localStageMap)
+                        ? localStageMap[sub.id]
+                        : (sub.stageMap?.workspaceStageId ?? null);
+                allCandidates.push({
+                    id: sub.candidate.id,
+                    submissionId: sub.id,
+                    fullName: sub.candidate.fullName,
+                    email: sub.candidate.email,
+                    createdAt: sub.candidate.createdAt,
+                    submittedAt: sub.submittedAt,
+                    formTitle: form.title,
+                    formId: form.id,
+                    currentStageId: stageId,
+                    answers: sub.formSubmissionAnswerDto || [],
+                    fields: form.fields || [],
+                });
+            }
+        });
+    });
 
+    const filteredCandidates = allCandidates.filter(c => {
+        if (selectedFormFilter && String(c.formId) !== String(selectedFormFilter)) {
+            return false;
+        }
 
+        if (!searchQuery) return true;
+        const q = searchQuery.toLowerCase();
+        return (c.fullName || '').toLowerCase().includes(q)
+            || (c.email || '').toLowerCase().includes(q)
+            || (c.formTitle || '').toLowerCase().includes(q);
+    });
+
+    // Group by stage
+    const applied = filteredCandidates.filter(c => !c.currentStageId);
+    const stageGroups = {};
+    stages.forEach(s => { stageGroups[s.id] = filteredCandidates.filter(c => c.currentStageId === s.id); });
+
+    // ─── Drag & Drop ─────────────────────────────────────────────────────────────
+    const handleDragStart = (e, candidate) => {
+        setDragCandidate(candidate);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e, stageId) => {
+        e.preventDefault();
+        setDragOverStage(stageId);
+    };
+
+    const handleDragLeave = () => setDragOverStage(null);
+
+    const handleDrop = (e, targetStageId) => {
+        e.preventDefault();
+        setDragOverStage(null);
+        if (!dragCandidate) return;
+        const prevStageId = dragCandidate.currentStageId;
+        // null means "Applied", so null == null is same column — don't fire
+        if (prevStageId === targetStageId) { setDragCandidate(null); return; }
+        if (!prevStageId && !targetStageId) { setDragCandidate(null); return; }
+
+        const submissionId = dragCandidate.submissionId;
+
+        // Optimistic update
+        dispatch(setLocalStage({ submissionId, stageId: targetStageId }));
+
+        // API call
+        dispatch(updateCandidateStage({ submissionId, stageId: targetStageId }))
+            .unwrap()
+            .then(() => toast.success('Stage updated!'))
+            .catch((err) => {
+                toast.error(err?.message || 'Failed to update stage');
+                // Rollback
+                dispatch(rollbackLocalStage({ submissionId, prevStageId }));
+            });
+
+        setDragCandidate(null);
+    };
+
+    // ─── Stage CRUD via Redux ─────────────────────────────────────────────────────
+    const handleAddStage = () => {
+        if (!newStageName.trim()) return;
+        dispatch(createWorkspaceStage({ name: newStageName.trim(), workspaceId: Number(selectedWorkspace), status: 1 }))
+            .unwrap()
+            .then(() => { setNewStageName(''); setShowAddStage(false); toast.success('Stage created!'); })
+            .catch(err => toast.error(err?.message || 'Failed to create stage'));
+    };
+
+    const handleEditStage = () => {
+        if (!editStageName.trim() || !editStage) return;
+        dispatch(updateWorkspaceStage({
+            id: editStage.id,
+            payload: { name: editStageName.trim(), workspaceId: Number(selectedWorkspace), status: editStage.status ?? 1 }
+        }))
+            .unwrap()
+            .then(() => { setEditStage(null); setEditStageName(''); toast.success('Stage updated!'); })
+            .catch(err => toast.error(err?.message || 'Failed to update stage'));
+    };
+
+    const handleDeleteStage = () => {
+        if (!deleteStageTarget) return;
+        dispatch(deleteWorkspaceStage(deleteStageTarget.id))
+            .unwrap()
+            .then(() => { setDeleteStageTarget(null); toast.success('Stage deleted!'); })
+            .catch(err => toast.error(err?.message || 'Failed to delete stage'));
+    };
+
+    const workspaceName = workspaceData?.data?.find(w => w.id == selectedWorkspace)?.name || '';
+
+    return (
+        <div className="flex flex-col h-[calc(100vh-90px)] p-4 md:p-6 overflow-hidden" style={{ background: 'var(--bg-main)' }}>
+
+            {/* ── Header ── */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 flex-shrink-0">
+                <div>
+                    <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                        Candidates
+                        {workspaceName && (
+                            <span className="text-sm font-normal px-2.5 py-1 rounded-full bg-[#8624F0]/10 text-[#8624F0]">
+                                {workspaceName}
+                            </span>
+                        )}
+                    </h1>
+                    <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                        Drag & drop candidates between stages to track progress
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <select
+                        value={selectedFormFilter}
+                        onChange={(e) => setSelectedFormFilter(e.target.value)}
+                        disabled={!selectedWorkspace}
+                        className="px-3 py-2 border rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#8624F0]/30 disabled:opacity-50"
+                        style={{ borderColor: 'var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                    >
+                        <option value="">All Forms</option>
+                        {rawForms.map(form => (
+                            <option key={form.id} value={form.id}>{form.title || 'Untitled Form'}</option>
+                        ))}
+                    </select>
+                    <div className="relative">
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        <input
+                            type="text"
+                            placeholder="Search candidates..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            disabled={!selectedWorkspace}
+                            className="pl-9 pr-4 py-2 border rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#8624F0]/30 disabled:opacity-50 w-52"
+                            style={{ borderColor: 'var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                        />
+                    </div>
+                    <button
+                        onClick={() => setShowAddStage(true)}
+                        disabled={!selectedWorkspace}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-[#8624F0] text-white rounded-[10px] text-sm font-semibold hover:bg-[#6c1dc0] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Plus className="w-4 h-4" /> Add Stage
+                    </button>
+                </div>
+            </div>
+
+            {/* ── Board ── */}
+            {!selectedWorkspace ? (
+                <div className="flex-1 flex flex-col items-center justify-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-[#8624F0]/10 flex items-center justify-center">
+                        <User className="w-8 h-8 text-[#8624F0]" />
+                    </div>
+                    <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Select a Workspace</h3>
+                    <p className="text-sm text-center max-w-xs" style={{ color: 'var(--text-secondary)' }}>
+                        Choose a workspace to view and manage your candidates on the Kanban board.
+                    </p>
+                    <button
+                        onClick={() => setShowWorkspaceModal(true)}
+                        className="px-6 py-2 bg-[#8624F0] text-white rounded-[10px] font-medium hover:bg-[#6c1dc0] transition-colors cursor-pointer"
+                    >
+                        Choose Workspace
+                    </button>
+                </div>
+            ) : candidateLoading ? (
+                <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#8624F0]" />
+                </div>
+            ) : (
+                <div className="flex-1 overflow-x-auto pb-2">
+                    <div className="flex gap-4 h-full" style={{ minWidth: 'max-content' }}>
+
+                        {/* Applied column */}
+                        <StageColumn
+                            stage={{ id: null, name: 'Applied' }}
+                            candidates={applied}
+                            color={APPLIED_COLOR}
+                            isApplied={true}
+                            onDrop={(e) => handleDrop(e, null)}
+                            onDragOver={(e) => handleDragOver(e, 'applied')}
+                            onDragLeave={handleDragLeave}
+                            onDragStart={handleDragStart}
+                            onEditStage={() => {}}
+                            onDeleteStage={() => {}}
+                            onCardClick={setSelectedCandidate}
+                            isDragOver={dragOverStage === 'applied'}
+                        />
+
+                        {/* Custom stages */}
+                        {stages.map((stage, idx) => (
+                            <StageColumn
+                                key={stage.id}
+                                stage={stage}
+                                candidates={stageGroups[stage.id] || []}
+                                color={STAGE_COLORS[idx % STAGE_COLORS.length]}
+                                isApplied={false}
+                                onDrop={(e) => handleDrop(e, stage.id)}
+                                onDragOver={(e) => handleDragOver(e, stage.id)}
+                                onDragLeave={handleDragLeave}
+                                onDragStart={handleDragStart}
+                                onEditStage={(s) => { setEditStage(s); setEditStageName(s.name); }}
+                                onDeleteStage={setDeleteStageTarget}
+                                onCardClick={setSelectedCandidate}
+                                isDragOver={dragOverStage === stage.id}
+                            />
+                        ))}
+
+                        {/* Add Stage button column */}
+                        <div
+                            onClick={() => setShowAddStage(true)}
+                            className="flex flex-col items-center justify-center min-w-[200px] rounded-[16px] border-2 border-dashed cursor-pointer hover:border-[#8624F0] hover:bg-[#8624F0]/5 transition-all duration-200 group"
+                            style={{ borderColor: 'var(--border-color)' }}
+                        >
+                            <div className="w-10 h-10 rounded-full bg-[#8624F0]/10 flex items-center justify-center mb-2 group-hover:bg-[#8624F0]/20 transition-colors">
+                                <Plus className="w-5 h-5 text-[#8624F0]" />
+                            </div>
+                            <p className="text-sm font-semibold text-[#8624F0]">Add Stage</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Workspace Modal ── */}
+            <WorkspaceModal
+                isOpen={showWorkspaceModal}
+                onClose={() => { if (selectedWorkspace) setShowWorkspaceModal(false); }}
+                workspaces={workspaceData?.data || []}
+                onSelect={handleSelectWorkspace}
+            />
+
+            {/* ── Add Stage Modal ── */}
+            {showAddStage && (
+                <Modal title="Create New Stage" onClose={() => setShowAddStage(false)}>
+                    <p className="text-sm text-gray-500 mb-4">Give your stage a clear name like "Phone Screen", "Interview", or "Offer".</p>
+                    <input
+                        autoFocus
+                        type="text"
+                        value={newStageName}
+                        onChange={e => setNewStageName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddStage()}
+                        placeholder="e.g. Phone Screen"
+                        className="w-full border rounded-[10px] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8624F0]/30 mb-4"
+                        style={{ borderColor: '#E5E7EB' }}
+                    />
+                    <div className="flex justify-end gap-2">
+                        <button onClick={() => setShowAddStage(false)} className="px-4 py-2 text-sm rounded-[8px] border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer">Cancel</button>
+                        <button
+                            onClick={handleAddStage}
+                            disabled={stageLoading || !newStageName.trim()}
+                            className="px-5 py-2 bg-[#8624F0] text-white text-sm font-semibold rounded-[8px] hover:bg-[#6c1dc0] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {stageLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Create Stage
+                        </button>
+                    </div>
+                </Modal>
+            )}
+
+            {/* ── Edit Stage Modal ── */}
+            {editStage && (
+                <Modal title="Edit Stage" onClose={() => setEditStage(null)}>
+                    <input
+                        autoFocus
+                        type="text"
+                        value={editStageName}
+                        onChange={e => setEditStageName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleEditStage()}
+                        placeholder="Stage name..."
+                        className="w-full border rounded-[10px] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8624F0]/30 mb-4"
+                        style={{ borderColor: '#E5E7EB' }}
+                    />
+                    <div className="flex justify-end gap-2">
+                        <button onClick={() => setEditStage(null)} className="px-4 py-2 text-sm rounded-[8px] border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer">Cancel</button>
+                        <button
+                            onClick={handleEditStage}
+                            disabled={stageLoading || !editStageName.trim()}
+                            className="px-5 py-2 bg-[#8624F0] text-white text-sm font-semibold rounded-[8px] hover:bg-[#6c1dc0] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {stageLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save Changes
+                        </button>
+                    </div>
+                </Modal>
+            )}
+
+            {/* ── Delete Stage Confirm Modal ── */}
+            {deleteStageTarget && (
+                <Modal title="Delete Stage?" onClose={() => setDeleteStageTarget(null)}>
+                    <div className="text-center mb-6">
+                        <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="w-7 h-7 text-red-500" />
+                        </div>
+                        <p className="text-sm text-gray-500">
+                            Are you sure you want to delete <strong className="text-gray-800">"{deleteStageTarget.name}"</strong>?
+                            Candidates in this stage will be moved back to <strong>Applied</strong>.
+                        </p>
+                    </div>
+                    <div className="flex justify-center gap-3">
+                        <button onClick={() => setDeleteStageTarget(null)} className="px-5 py-2 text-sm rounded-[8px] border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer">Cancel</button>
+                        <button
+                            onClick={handleDeleteStage}
+                            disabled={stageLoading}
+                            className="px-5 py-2 bg-red-500 text-white text-sm font-semibold rounded-[8px] hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {stageLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Delete Stage
+                        </button>
+                    </div>
+                </Modal>
+            )}
+
+            {/* ── Candidate Side Drawer (matching screenshot) ── */}
+            {selectedCandidate && (
+                <div className="fixed inset-0 z-50 flex justify-end">
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]" onClick={() => setSelectedCandidate(null)} />
+
+                    {/* Drawer panel */}
+                    <div className="relative w-[500px] h-full bg-white shadow-2xl flex flex-col animate-slide-in overflow-hidden z-10 border-l border-gray-100">
+                        {/* Header */}
+                        <div className="p-6 border-b border-gray-100 relative">
+                            {/* Close button */}
+                            <button
+                                onClick={() => setSelectedCandidate(null)}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+
+                            <div className="flex items-start justify-between pr-8">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-1.5">
+                                        <h2 className="text-[20px] font-bold text-gray-800">
+                                            {selectedCandidate.formTitle || 'Unknown Form'}
+                                        </h2>
+                                        <span className="px-3 py-1 bg-purple-100 text-purple-600 text-xs font-semibold rounded-full">
+                                            {selectedCandidate.currentStage || 'Applied'}
+                                        </span>
+                                    </div>
+                                    <p className="text-[13px] text-gray-400 font-medium">
+                                        Applied: {formatDate(selectedCandidate.submittedAt || selectedCandidate.createdAt)}
+                                    </p>
+                                </div>
+                                
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => setPopupView('details')}
+                                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${popupView === 'details' ? 'bg-[#8624F0] text-white' : 'bg-gray-100 text-gray-500'}`}
+                                    >
+                                        <Eye size={18} />
+                                    </button>
+                                    <button 
+                                        onClick={() => setPopupView('chat')}
+                                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${popupView === 'chat' ? 'bg-[#8624F0] text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+                                    >
+                                        <AiOutlineMessage size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Content Area */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {popupView === 'details' ? (
+                                <>
+                                    <h3 className="text-[15px] font-bold text-[#1F2937] mb-6">Form Responses</h3>
+                                    
+                                    <div className="space-y-6">
+                                        {/* Standard fields if they exist */}
+                                        {selectedCandidate.fullName && (
+                                            <div>
+                                                <label className="block text-[13px] font-bold text-gray-700 mb-2">
+                                                    Full Name <span className="text-red-500">*</span>
+                                                </label>
+                                                <div className="w-full bg-[#FCF9FF] border border-[#F3EAFF] rounded-[8px] px-4 py-2.5 text-[14px] text-gray-800 font-medium">
+                                                    {selectedCandidate.fullName}
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        {selectedCandidate.email && (
+                                            <div>
+                                                <label className="block text-[13px] font-bold text-gray-700 mb-2">
+                                                    Email Address <span className="text-red-500">*</span>
+                                                </label>
+                                                <div className="w-full bg-[#FCF9FF] border border-[#F3EAFF] rounded-[8px] px-4 py-2.5 text-[14px] text-gray-800 font-medium">
+                                                    {selectedCandidate.email}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Dynamic Form Answers */}
+                                        {selectedCandidate.answers?.map((ans, i) => {
+                                            const field = selectedCandidate.fields?.find(f => f.id === ans.fieldId);
+                                            // Skip standard fields if they are already mapped to candidate core properties, or just show them all
+                                            return (
+                                                <div key={i}>
+                                                    <label className="block text-[13px] font-bold text-gray-700 mb-2">
+                                                        {field?.label || `Field ${i + 1}`}
+                                                    </label>
+                                                    <div className="w-full bg-[#FCF9FF] border border-[#F3EAFF] rounded-[8px] px-4 py-2.5 text-[14px] text-gray-800 font-medium break-words">
+                                                        {ans.answer || '—'}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {(!selectedCandidate.answers || selectedCandidate.answers.length === 0) && (
+                                            <p className="text-sm text-gray-400">No additional responses recorded.</p>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <CandidateChat 
+                                  candidate={selectedCandidate} 
+                                  onBack={() => setPopupView('details')} 
+                                />
+                            )}
+                        </div>
+
+                    </div>
+                </div>
+            )}
+            
+            <style jsx global>{`
+                @keyframes slide-in {
+                    from { transform: translateX(100%); }
+                    to   { transform: translateX(0); }
+                }
+                .animate-slide-in { animation: slide-in 0.25s cubic-bezier(0.16,1,0.3,1); }
+            `}</style>
+
+      </div>
+    );
+}

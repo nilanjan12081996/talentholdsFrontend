@@ -4,21 +4,21 @@ import Image from 'next/image';
 
 import { Label, TextInput, Textarea, Datepicker, Button  } from "flowbite-react";
 
-import hospital_banner from "../../assets/imagesource/hospital_banner.png";
-import social_img from "../../assets/imagesource/social_img.png";
-import contact_img from "../../assets/imagesource/contact_img.png";
-import captcha_img from "../../assets/imagesource/captcha_img.png";
-import hospital_01 from "../../assets/imagesource/hospital_01.png";
-import crm_img from "../../assets/imagesource/crm_img.png";
+// import " \ from \../../assets/imagesource/" \.png\;
+// import \\ from \../../assets/imagesource/\\.png\;
+// import \\ from \../../assets/imagesource/\\.png\;
+// import \\ from \../../assets/imagesource/\\.png\;
+// import \\ from \../../assets/imagesource/\\.png\;
+// import \\ from " ../../assets/imagesource/\\.png\;
 
-import crm_img_01 from "../../assets/imagesource/crm_img_01.png";
-import crm_img_02 from "../../assets/imagesource/crm_img_02.png";
-import crm_img_03 from "../../assets/imagesource/crm_img_03.png";
-import crm_img_04 from "../../assets/imagesource/crm_img_04.png";
-import crm_img_05 from "../../assets/imagesource/crm_img_05.png";
-import crm_img_06 from "../../assets/imagesource/crm_img_06.png";
-import crm_img_07 from "../../assets/imagesource/crm_img_07.png";
-import crm_img_08 from "../../assets/imagesource/crm_img_08.png";
+// import \\ from " ../../assets/imagesource/\\.png\;
+// // import \\ from " ../../assets/imagesource/\\.png\;
+// // import \\ from " ../../assets/imagesource/\\.png\;
+// // import \\ from " ../../assets/imagesource/\\.png\;
+// // import \\ from " ../../assets/imagesource/\\.png\;
+// // import \\ from " ../../assets/imagesource/\\.png\;
+// // import \\ from " ../../assets/imagesource/\\.png\;
+// // import \\ from " ../../assets/imagesource/\\.png\;
 
 import { BiCheck } from "react-icons/bi";
 
@@ -38,7 +38,7 @@ const page = () => {
         {/* Banner section start here */}
         <div className='banner_area py-0 lg:p-0'>
             <div className="inner_banner_area relative lg:mx-[30px] mx-4 my-5 lg:my-0">
-                <Image src={hospital_banner} alt='hospital_banner' className="" />
+                <Image src={""} alt="" className="" />
                 <div className="banner_content_area absolute w-full h-full left-0 top-0">
                     <div className='max-w-6xl mx-auto flex justify-center items-center h-full'>
                         <div className="w-full px-0 pt-0 lg:pt-0">

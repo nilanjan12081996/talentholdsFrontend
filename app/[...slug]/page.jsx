@@ -501,7 +501,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form"; 
 import { Eye, EyeOff } from "lucide-react";
 // 1. Import the new upload thunks
-import { getForm, saveForm, uploadImageForm, uploadVideoForm } from "../Reducer/FormbuilderSlice"; 
+import { getForm, saveForm, uploadImageForm, uploadVideoForm, getFormLogo, getFormBackground } from "../Reducer/FormbuilderSlice";
 
 export default function PublicFormPage({ params }) {
     const unwrappedParams = use(params);
@@ -519,6 +519,10 @@ export default function PublicFormPage({ params }) {
     const [passwordError, setPasswordError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
 
+    // Media state
+    const [formLogo, setFormLogo] = useState(null);
+    const [formBgImage, setFormBgImage] = useState(null);
+
     const { register, handleSubmit, formState: { errors } } = useForm();
 
     useEffect(() => {
@@ -533,8 +537,22 @@ export default function PublicFormPage({ params }) {
             if (!currentForm.password) {
                 setIsAuthenticated(true);
             }
+            
+            // Fetch Logo and Background using the loaded form's ID
+            if (currentForm.id) {
+                dispatch(getFormLogo(currentForm.id)).then((res) => {
+                    if(res.payload?.data?.logo) {
+                        setFormLogo({ url: res.payload.data.logo });
+                    }
+                });
+                dispatch(getFormBackground(currentForm.id)).then((res) => {
+                    if(res.payload?.data?.backImage) {
+                        setFormBgImage({ url: res.payload.data.backImage });
+                    }
+                });
+            }
         }
-    }, [currentForm]);
+    }, [currentForm, dispatch]);
 
     const onSubmit = async (data) => {
         setIsSubmitting(true);
@@ -693,7 +711,7 @@ export default function PublicFormPage({ params }) {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                             >
                                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </button>
@@ -705,7 +723,7 @@ export default function PublicFormPage({ params }) {
                             if (enteredPassword === currentForm.password) setIsAuthenticated(true);
                             else setPasswordError("Incorrect password");
                         }}
-                        className="w-full py-3 bg-[#8624F0] text-white rounded-[10px] font-bold hover:bg-[#6c1dc0] transition-colors"
+                        className="w-full py-3 bg-[#8624F0] text-white rounded-[10px] font-bold hover:bg-[#6c1dc0] transition-colors cursor-pointer"
                     >
                         Access Form
                     </button>
@@ -716,10 +734,22 @@ export default function PublicFormPage({ params }) {
 
     if (isSuccess) {
         return (
-            <div className="w-full max-w-2xl bg-white p-8 rounded-[20px] shadow-sm text-center border border-green-200">
-                <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✓</div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h2>
-                <p className="text-gray-600">Your response has been successfully submitted.</p>
+            <div className="min-h-screen w-full flex justify-center pt-20 px-4 sm:px-8 bg-[var(--bg-main)]">
+                <div className="flex flex-col items-center w-full max-w-[750px]">
+                    <div className="w-full bg-white p-12 rounded-[8px] shadow-sm border border-gray-200 text-center flex flex-col items-center justify-center min-h-[300px]">
+                        <h1 className="text-4xl font-bold text-gray-900 mb-6">{currentForm.title}</h1>
+                        <p className="text-gray-700 text-lg mb-8">Thank you for submitting your response.</p>
+                        <p className="text-gray-500 text-sm">Your information has been recorded safely.</p>
+                    </div>
+                    
+                    <div className="mt-8 text-sm text-gray-500 font-medium flex items-center justify-center gap-2">
+                        Powered by 
+                        <span className="flex items-center gap-1.5 text-black font-bold">
+                            <div className="w-5 h-5 bg-[#8624F0] text-white rounded-[4px] flex items-center justify-center text-[10px]">T</div>
+                            TalentHolds
+                        </span>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -727,15 +757,38 @@ export default function PublicFormPage({ params }) {
     const fields = currentForm.fields || [];
 
     return (
-        <div className="w-full max-w-2xl">
-            <div className="bg-white p-8 rounded-t-[20px] border-t-8 border-[#8624F0] shadow-sm mb-4">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentForm.title}</h1>
-                {currentForm.description && (
-                    <p className="text-gray-600 whitespace-pre-wrap">{currentForm.description}</p>
-                )}
-            </div>
+        <div className="min-h-screen w-full flex justify-center pt-10 pb-20 px-4 sm:px-8 bg-[var(--bg-main)]">
+            <div className="flex flex-col items-center w-full max-w-[750px]">
+                <div className="w-full bg-white rounded-[8px] shadow-sm border border-gray-200 overflow-hidden h-fit">
+                    
+                    {/* Banner Image */}
+                    {formBgImage && (
+                        <div 
+                            className="w-full h-[160px] sm:h-[200px] bg-cover bg-center bg-no-repeat"
+                            style={{ backgroundImage: `url(${formBgImage.url})` }}
+                        />
+                    )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="px-6 sm:px-10 pb-10 pt-0 relative">
+                        {/* Logo / Profile Pic */}
+                        {formLogo && (
+                            <div className={`${formBgImage ? '-mt-[50px] sm:-mt-[60px]' : 'mt-8'} mb-6 flex justify-start`}>
+                                <img 
+                                    src={formLogo.url} 
+                                    alt="Form Logo" 
+                                    className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] object-cover rounded-full border-4 border-white shadow-md bg-white relative z-10" 
+                                />
+                            </div>
+                        )}
+
+                        <div className={`mb-8 ${(!formBgImage && !formLogo) ? 'pt-8' : ''}`}>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentForm.title}</h1>
+                            {currentForm.description && (
+                                <p className="text-gray-700 whitespace-pre-wrap">{currentForm.description}</p>
+                            )}
+                        </div>
+
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {fields.map((field) => (
                     <div key={field.id} className="bg-white p-6 rounded-[12px] shadow-sm border border-gray-100">
                         <label className="block text-base font-medium text-gray-900 mb-1">
@@ -757,16 +810,28 @@ export default function PublicFormPage({ params }) {
                     </div>
                 ))}
 
-                <div className="pt-4 flex justify-end pb-12">
+                <div className="pt-6 flex justify-center pb-4">
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="px-8 py-3 bg-[#8624F0] text-white rounded-[10px] font-bold hover:bg-[#6c1dc0] transition-colors disabled:opacity-50"
+                        className="px-12 py-3 bg-[#8624F0] text-white rounded-[8px] font-bold hover:bg-[#6c1dc0] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto min-w-[200px]"
                     >
                         {isSubmitting ? "Submitting Data..." : "Submit"}
                     </button>
                 </div>
             </form>
+            </div>
+            </div>
+
+            <div className="mt-8 text-sm text-gray-500 font-medium flex items-center justify-center gap-2">
+                Powered by 
+                <span className="flex items-center gap-1.5 text-black font-bold">
+                    <div className="w-5 h-5 bg-[#8624F0] text-white rounded-[4px] flex items-center justify-center text-[10px]">T</div>
+                    TalentHolds
+                </span>
+            </div>
+
+            </div>
         </div>
     );
 }
