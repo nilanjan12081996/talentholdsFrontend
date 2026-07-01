@@ -36,6 +36,7 @@ const noLayoutRoutes = [
   '/signup',
   '/verify',
   '/forgot-password',
+  '/reset-password',
   '/forms/builder',
   '/import',
 ];

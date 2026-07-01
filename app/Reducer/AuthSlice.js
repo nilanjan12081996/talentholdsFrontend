@@ -153,6 +153,22 @@ export const forgetPassword = createAsyncThunk(
     }
 )
 
+export const resetPassword = createAsyncThunk(
+    'auth/resetPassword',
+    async (userInput, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/organization/resetpassword', userInput);
+            if (response?.data?.statusCode === 200 || response?.status === 200) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err?.response?.data || err);
+        }
+    }
+)
+
 const initialState = {
     message: null,
     error: null,
