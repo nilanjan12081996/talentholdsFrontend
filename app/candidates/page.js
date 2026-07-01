@@ -20,6 +20,7 @@ import {
 import WorkspaceModal from '../forms/WorkspaceModal';
 import { toast } from 'react-toastify';
 import CandidateChat from './CandidateChat';
+import api from '../Reducer/api';
 
 import { GrOverview } from 'react-icons/gr';
 import { AiOutlineMessage, AiOutlineMail, AiOutlineCalendar } from 'react-icons/ai';
@@ -329,6 +330,9 @@ export default function Candidates() {
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const [popupView, setPopupView] = useState('details');
     const [isOpen, setIsOpen] = useState(false);
+    const [previewLogo, setPreviewLogo] = useState(null);
+    const [previewBg, setPreviewBg] = useState(null);
+    
     // Stage modal states
     const [showAddStage, setShowAddStage] = useState(false);
     const [newStageName, setNewStageName] = useState('');
@@ -344,6 +348,32 @@ export default function Candidates() {
 
     // Load workspaces on mount
     useEffect(() => { dispatch(workspaceList()); }, [dispatch]);
+
+    // Fetch form media for selected candidate
+    useEffect(() => {
+        if (selectedCandidate?.formId) {
+            setPreviewLogo(null);
+            setPreviewBg(null);
+            
+            api.get(`/v1/forms/${selectedCandidate.formId}/logo`)
+                .then(res => {
+                    // Check for both 'logo' and 'logoUrl' just in case
+                    const logoValue = res.data?.data?.logo || res.data?.data?.logoUrl;
+                    if (logoValue) {
+                        setPreviewLogo(logoValue);
+                    }
+                }).catch(() => {});
+                
+            api.get(`/v1/forms/${selectedCandidate.formId}/background`)
+                .then(res => {
+                    // Check for both 'backImage' and 'background' just in case
+                    const bgValue = res.data?.data?.backImage || res.data?.data?.background;
+                    if (bgValue) {
+                        setPreviewBg(bgValue);
+                    }
+                }).catch(() => {});
+        }
+    }, [selectedCandidate?.formId]);
 
     // Auto-select workspace
     useEffect(() => {
@@ -913,12 +943,26 @@ export default function Candidates() {
                         </div>
 
                         {/* Content Area */}
-                        <div className="flex-1 overflow-y-auto p-6">
+                        <div className="flex-1 overflow-y-auto">
                             {popupView === 'details' ? (
                                 <>
-                                    <h3 className="text-[15px] font-bold text-[#1F2937] mb-6">Form Responses</h3>
+                                    {previewBg && (
+                                        <div className="w-full h-[120px] mb-6 relative">
+                                            <img src={previewBg} alt="Form Cover" className="w-full h-full object-cover" />
+                                            {previewLogo && (
+                                                <div className="absolute left-6 bottom-[-30px] w-[70px] h-[70px] rounded-full border-4 border-white bg-white shadow-sm z-10 flex items-center justify-center overflow-hidden">
+                                                    <img src={previewLogo} alt="Form Logo" className="w-full h-full object-contain" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {!previewBg && previewLogo && (
+                                        <div className="w-[70px] h-[70px] rounded-full border border-gray-100 bg-white overflow-hidden shadow-sm mx-6 mt-6 mb-6">
+                                            <img src={previewLogo} alt="Form Logo" className="w-full h-full object-contain" />
+                                        </div>
+                                    )}
                                     
-                                    <div className="space-y-6">
+                                    <div className={`px-6 pb-6 space-y-6 ${previewBg ? (previewLogo ? 'mt-10' : 'mt-4') : (!previewBg && !previewLogo ? 'mt-6' : '')}`}>
                                         {/* Standard fields if they exist */}
                                         {selectedCandidate.fullName && (
                                             <div>
@@ -945,15 +989,34 @@ export default function Candidates() {
                                         {/* Dynamic Form Answers */}
                                         {selectedCandidate.answers?.map((ans, i) => {
                                             const field = selectedCandidate.fields?.find(f => f.id === ans.fieldId);
-                                            // Skip standard fields if they are already mapped to candidate core properties, or just show them all
+                                            const value = ans.textValue || ans.numberValue || ans.dateValue || ans.imageUrl || ans.videoUrl || ans.answer;
+                                            
+                                            const renderMedia = () => {
+                                                if (!value) return '—';
+                                                
+                                                if (typeof value === 'string' && (ans.imageUrl || ans.videoUrl)) {
+                                                    const fullUrl = value.startsWith('http') ? value : `${process.env.NEXT_PUBLIC_API_BASE_URL}/${value.replace(/\\\\/g, '/')}`;
+                                                    
+                                                    return (
+                                                        <a href={fullUrl} target="_blank" rel="noreferrer" className="block w-full bg-[#FCF9FF] border border-[#F3EAFF] rounded-[8px] px-4 py-2.5 text-[14px] text-[#3B82F6] font-medium break-words hover:underline mt-2 cursor-pointer">
+                                                            {value}
+                                                        </a>
+                                                    );
+                                                }
+                                                
+                                                return (
+                                                    <div className="w-full bg-[#FCF9FF] border border-[#F3EAFF] rounded-[8px] px-4 py-2.5 text-[14px] text-gray-800 font-medium break-words mt-2">
+                                                        {value}
+                                                    </div>
+                                                );
+                                            };
+
                                             return (
                                                 <div key={i}>
-                                                    <label className="block text-[13px] font-bold text-gray-700 mb-2">
+                                                    <label className="block text-[13px] font-bold text-gray-700 mb-0">
                                                         {field?.label || `Field ${i + 1}`}
                                                     </label>
-                                                    <div className="w-full bg-[#FCF9FF] border border-[#F3EAFF] rounded-[8px] px-4 py-2.5 text-[14px] text-gray-800 font-medium break-words">
-                                                        {ans.textValue || ans.numberValue || ans.dateValue || ans.imageUrl || ans.videoUrl || ans.answer || '—'}
-                                                    </div>
+                                                    {renderMedia()}
                                                 </div>
                                             );
                                         })}
@@ -964,10 +1027,12 @@ export default function Candidates() {
                                     </div>
                                 </>
                             ) : (
-                                <CandidateChat 
-                                  candidate={selectedCandidate} 
-                                  onBack={() => setPopupView('details')} 
-                                />
+                                <div className="p-6 h-full">
+                                    <CandidateChat 
+                                      candidate={selectedCandidate} 
+                                      onBack={() => setPopupView('details')} 
+                                    />
+                                </div>
                             )}
                         </div>
 

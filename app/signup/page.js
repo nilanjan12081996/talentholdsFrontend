@@ -242,7 +242,13 @@ export default function Login() {
                 type={showPassword ? 'text' : 'password'}
                 className="border border-[#761ed3] rounded-[10px]"
                 placeholder=''
-                {...register("password", { required: "Password is required" })}
+                {...register("password", { 
+                  required: "Password is required",
+                  pattern: {
+                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/,
+                    message: "Password must contain at least 1 uppercase letter, 1 lowercase letter, 1 special character, and be 8+ chars long"
+                  }
+                })}
               />
               <button
                 type="button"
@@ -389,29 +395,7 @@ export default function Login() {
         )}
 
         {step === 1 && (
-          <>
-            {/* Divider */}
-            <div className="w-full max-w-[440px] flex items-center gap-4 mb-6">
-              <div className="h-[1px] flex-1 border-t-2 border-dashed border-[#DBDBDB]"></div>
-              <span className="text-[#979797] text-[20px]">Or</span>
-              <div className="h-[1px] flex-1 border-t-2 border-dashed border-[#DBDBDB]"></div>
-            </div>
-
-            {/* Google Button */}
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="w-full max-w-[440px] h-[50px] bg-[#f7f7f7] border border-[#c9c9c9] rounded-[4px] flex items-center justify-center gap-4 hover:bg-gray-100 transition-colors"
-            >
-              <img
-                src="https://www.svgrepo.com/show/475656/google-color.svg"
-                alt="Google"
-                className="w-[36px] h-[36px]"
-              />
-              <span className="text-[#6b6b6b] text-[20px] font-medium">
-                Continue with Google
-              </span>
-            </button>
-          </>
+          <></>
         )}
 
         <div className='text-center mt-2'>

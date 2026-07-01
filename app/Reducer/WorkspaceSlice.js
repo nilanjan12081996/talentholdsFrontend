@@ -7,6 +7,20 @@ export const workspaceList = createAsyncThunk(
         try {
             const response = await api.get('/workspace', userInput);
             if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
+                if (typeof window !== "undefined" && response.data?.data && Array.isArray(response.data.data)) {
+                    const primaryWs = response.data.data.find(w => w.primaryWorkspaceDto);
+                    if (primaryWs) {
+                        localStorage.setItem('primaryWorkspaceId', primaryWs.id);
+                    } else if (response.data.data.length > 0) {
+                        const currentLocal = localStorage.getItem('primaryWorkspaceId');
+                        const exists = response.data.data.find(w => w.id == currentLocal);
+                        if (!exists) {
+                            localStorage.setItem('primaryWorkspaceId', response.data.data[0].id);
+                        }
+                    } else {
+                        localStorage.removeItem('primaryWorkspaceId');
+                    }
+                }
                 return response.data;
             } else {
                 return rejectWithValue(response.data);

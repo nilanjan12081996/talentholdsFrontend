@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, User, FileText, CheckCircle, Clock, ExternalLink } from 'lucide-react';
+import { Search, User, FileText, CheckCircle, Clock, ExternalLink, HardDrive } from 'lucide-react';
 
 // Stats array will be generated dynamically now
 
@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { workspaceList } from '../Reducer/WorkspaceSlice';
 import { getCandidateByWorkspace } from '../Reducer/CandidateSlice';
 import { allFormList } from '../Reducer/FormbuilderSlice';
+import { getStorageInfo } from '../Reducer/StorageSlice';
 import api from '../Reducer/api';
 
 // We will use dynamic forms now instead of static forms
@@ -27,6 +28,7 @@ export default function Dashboard() {
   const { workspaceData } = useSelector((state) => state?.workspace || {});
   const { candidate } = useSelector((state) => state?.candidate || {});
   const { allforms } = useSelector((state) => state?.formBuilder || {});
+  const { storageInfo } = useSelector((state) => state?.storage || {});
 
   useEffect(() => {
     dispatch(workspaceList());
@@ -37,6 +39,9 @@ export default function Dashboard() {
         setDashboardStats(res.data.data);
       }
     }).catch(err => console.error("Failed to fetch dashboard stats", err));
+
+    // Fetch storage info
+    dispatch(getStorageInfo());
   }, [dispatch]);
 
   useEffect(() => {
@@ -48,7 +53,7 @@ export default function Dashboard() {
       dispatch(allFormList({ id: targetWorkspace, page: 0, size: 20 }));
 
       // Fetch stages for proper mapping
-      api.get(`/stages?workspaceId=${targetWorkspace}`).then(res => {
+      api.get(`/workspace-stages/workspace/${targetWorkspace}`).then(res => {
         if (res.data?.data) {
           setStages(res.data.data);
         }
@@ -71,7 +76,7 @@ export default function Dashboard() {
           createdAt: sub.candidate.createdAt,
           submittedAt: sub.submittedAt,
           formTitle: form.title,
-          currentStage: stages?.find(s => s.id === sub.currentStageId)?.name || (sub.currentStageId ? `Stage ${sub.currentStageId}` : "Applied")
+          currentStage: stages?.find(s => String(s.id) === String(sub.currentStageId))?.name || (sub.currentStageId ? `Stage ${sub.currentStageId}` : "Applied")
         });
       }
     });
@@ -99,11 +104,23 @@ export default function Dashboard() {
     return dateB - dateA; // Sort descending
   }).slice(0, 10); // Take only 10 candidates
 
+  const formatBytes = (bytes) => {
+    if (!bytes || bytes === 0) return '0 KB';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formattedUsedStorage = storageInfo?.totalStorageUsedBytes ? formatBytes(storageInfo.totalStorageUsedBytes) : '0 KB';
+  const storageLimitGB = storageInfo?.totalStorageLimitGb || '0';
+  const storageString = `${formattedUsedStorage} / ${storageLimitGB} GB`;
+
   const dynamicStats = [
     { label: 'Total Candidates', value: dashboardStats.totalCandidates, icon: User, lightColor: 'bg-[#FFECEC]', iconColor: 'text-[#F53D6B]' },
     { label: 'Total Workspace', value: dashboardStats.totalWorkspaces, icon: CheckCircle, lightColor: 'bg-[#ECFCE5]', iconColor: 'text-[#25852F]' },
     { label: 'Total Form Created', value: dashboardStats.totalForms, icon: FileText, lightColor: 'bg-[#E5F7FA]', iconColor: 'text-[#00C2E0]' },
-    { label: 'Total Candidates Shortlisted', value: dashboardStats.totalShortlisted, icon: Clock, lightColor: 'bg-[#FFF4DE]', iconColor: 'text-[#FFA800]' },
+    { label: 'Storage Used', value: storageString, icon: HardDrive, lightColor: 'bg-[#FFF4DE]', iconColor: 'text-[#FFA800]' },
   ];
 
   const dynamicForms = [...(allforms?.data?.content || [])]

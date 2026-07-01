@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, getProfile } from '../Reducer/AuthSlice';
 import { getPlans, getCurrentSubscription, cancelSubscription } from '../Reducer/PlanSlice';
-import { workspaceList } from '../Reducer/WorkspaceSlice';
+import { workspaceList, setPrimaryWorkspace } from '../Reducer/WorkspaceSlice';
 import Swal from 'sweetalert2';
 
 export default function TopBar({ onMenuClick }) {
@@ -49,10 +49,15 @@ export default function TopBar({ onMenuClick }) {
         dispatch(workspaceList());
     }, [dispatch]);
 
-    const handleWorkspaceChange = (e) => {
+    const handleWorkspaceChange = async (e) => {
         const newId = e.target.value;
         setSelectedWorkspace(newId);
         localStorage.setItem('primaryWorkspaceId', newId);
+        try {
+            await dispatch(setPrimaryWorkspace({ workspaceId: newId })).unwrap();
+        } catch (error) {
+            console.error("Failed to set primary workspace", error);
+        }
         window.location.reload(); // Refresh to update all components
     };
 

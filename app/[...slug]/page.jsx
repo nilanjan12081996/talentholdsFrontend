@@ -501,7 +501,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form"; 
 import { Eye, EyeOff } from "lucide-react";
 // 1. Import the new upload thunks
-import { getForm, saveForm, uploadImageForm, uploadVideoForm, getFormLogo, getFormBackground } from "../Reducer/FormbuilderSlice";
+import { getForm, saveForm, uploadImageForm, uploadVideoForm, getFormLogoBySlug, getFormBackgroundBySlug } from "../Reducer/FormbuilderSlice";
 
 export default function PublicFormPage({ params }) {
     const unwrappedParams = use(params);
@@ -538,21 +538,22 @@ export default function PublicFormPage({ params }) {
                 setIsAuthenticated(true);
             }
             
-            // Fetch Logo and Background using the loaded form's ID
-            if (currentForm.id) {
-                dispatch(getFormLogo(currentForm.id)).then((res) => {
+            // Fetch Logo and Background using the form code from the URL slug
+            if (slugArray && slugArray.length > 2) {
+                const formCode = slugArray[2];
+                dispatch(getFormLogoBySlug(formCode)).then((res) => {
                     if(res.payload?.data?.logo) {
                         setFormLogo({ url: res.payload.data.logo });
                     }
                 });
-                dispatch(getFormBackground(currentForm.id)).then((res) => {
+                dispatch(getFormBackgroundBySlug(formCode)).then((res) => {
                     if(res.payload?.data?.backImage) {
                         setFormBgImage({ url: res.payload.data.backImage });
                     }
                 });
             }
         }
-    }, [currentForm, dispatch]);
+    }, [currentForm, dispatch, slugArray]);
 
     const onSubmit = async (data) => {
         setIsSubmitting(true);
@@ -757,7 +758,22 @@ export default function PublicFormPage({ params }) {
     const fields = currentForm.fields || [];
 
     return (
-        <div className="min-h-screen w-full flex justify-center pt-10 pb-20 px-4 sm:px-8 bg-[var(--bg-main)]">
+        <div className="min-h-screen w-full flex justify-center pt-10 pb-20 px-4 sm:px-8 bg-[var(--bg-main)] relative">
+            
+            {/* Full Page Loading Overlay */}
+            {isSubmitting && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/70 backdrop-blur-sm transition-all duration-300">
+                    <div className="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center border border-gray-100 max-w-sm w-full mx-4 text-center">
+                        <svg className="animate-spin h-14 w-14 text-[#8624F0] mb-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-100" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Submitting...</h2>
+                        <p className="text-gray-500 text-sm font-medium">Please wait while we securely save your response.</p>
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-col items-center w-full max-w-[750px]">
                 <div className="w-full bg-white rounded-[8px] shadow-sm border border-gray-200 overflow-hidden h-fit">
                     

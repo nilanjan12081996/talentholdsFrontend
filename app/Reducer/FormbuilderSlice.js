@@ -8,7 +8,7 @@ export const formListData = createAsyncThunk(
 
         try {
             const response = await api.get('/form/type-list', userInput);
-            if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
                 return rejectWithValue(response.data);
@@ -19,13 +19,13 @@ export const formListData = createAsyncThunk(
         }
     }
 )
-export const createForm=createAsyncThunk(
+export const createForm = createAsyncThunk(
     'createForm',
-      async (userInput, { rejectWithValue }) => {
+    async (userInput, { rejectWithValue }) => {
 
         try {
             const response = await api.post('/form/add/update', userInput);
-            if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
                 return rejectWithValue(response.data);
@@ -42,13 +42,13 @@ export const uploadFormLogo = createAsyncThunk(
         try {
             const formData = new FormData();
             formData.append('file', file);
-            
+
             const response = await api.post(`/v1/forms/${formId}/logo`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 }
             });
-            
+
             if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
@@ -66,13 +66,13 @@ export const uploadFormBackground = createAsyncThunk(
         try {
             const formData = new FormData();
             formData.append('file', file);
-            
+
             const response = await api.post(`/v1/forms/${formId}/background`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 }
             });
-            
+
             if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
@@ -120,7 +120,8 @@ export const getFormLogoBySlug = createAsyncThunk(
     'getFormLogoBySlug',
     async (slug, { rejectWithValue }) => {
         try {
-            const response = await api.get(`/v1/forms/slug/logo?slug=${encodeURIComponent(slug)}`);
+            // Added extra slash //slug to match the typo in SecurityConfig whitelist
+            const response = await api.get(`/v1/forms/slug/${encodeURIComponent(slug)}/logo`);
             if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
@@ -136,7 +137,7 @@ export const getFormBackgroundBySlug = createAsyncThunk(
     'getFormBackgroundBySlug',
     async (slug, { rejectWithValue }) => {
         try {
-            const response = await api.get(`/v1/forms/slug/background?slug=${encodeURIComponent(slug)}`);
+            const response = await api.get(`/v1/forms/slug/${encodeURIComponent(slug)}/background`);
             if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
@@ -148,13 +149,13 @@ export const getFormBackgroundBySlug = createAsyncThunk(
     }
 );
 
-export const getForm=createAsyncThunk(
+export const getForm = createAsyncThunk(
     'getForm',
-     async (slug, { rejectWithValue }) => {
+    async (slug, { rejectWithValue }) => {
 
         try {
-            const response = await api.get(`/form/slug?slug=${slug}`, );
-            if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
+            const response = await api.get(`/form/slug?slug=${slug}`,);
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
                 return rejectWithValue(response.data);
@@ -166,13 +167,13 @@ export const getForm=createAsyncThunk(
     }
 )
 
-export const saveForm=createAsyncThunk(
+export const saveForm = createAsyncThunk(
     'saveForm',
-     async (userInput, { rejectWithValue }) => {
+    async (userInput, { rejectWithValue }) => {
 
         try {
             const response = await api.post(`/fromsubmission/save`, userInput);
-            if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
                 return rejectWithValue(response.data);
@@ -194,13 +195,13 @@ export const saveForm=createAsyncThunk(
 //             // Construct multipart/form-data
 //             const formData = new FormData();
 //             formData.append('file', file);
-            
+
 //             const response = await api.post(
 //                 `/fromsubmission/upload/image?submissionId=${submissionId}&fieldId=${fieldId}`, 
 //                 formData,
 //                 // { headers: { 'Content-Type': 'multipart/form-data' } }
 //             );
-            
+
 //             if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
 //                 return response.data;
 //             } else {
@@ -215,19 +216,19 @@ export const saveForm=createAsyncThunk(
 
 export const uploadImageForm = createAsyncThunk(
     'uploadImageForm',
-    async ({ file, submissionId, fieldId,email,formId }, { rejectWithValue }) => {
+    async ({ file, submissionId, fieldId, email, formId }, { rejectWithValue }) => {
         try {
             const formData = new FormData();
             formData.append('file', file);
-            
+
             // Use STANDARD axios, NOT your custom 'api'
             const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/fromsubmission/upload/image?submissionId=${submissionId}&fieldId=${fieldId}&email=${email}&formId=${formId}`, 
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/fromsubmission/upload/image?submissionId=${submissionId}&fieldId=${fieldId}&email=${email}&formId=${formId}`,
                 formData
                 // Absolutely NO headers here! 
                 // Axios + the browser will perfectly handle the multipart boundary.
             );
-            
+
             if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
@@ -249,7 +250,7 @@ export const uploadVideoForm = createAsyncThunk(
                 file,
                 { headers: { 'Content-Type': file.type || 'application/octet-stream' } }
             );
-            
+
             if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
@@ -264,11 +265,11 @@ export const uploadVideoForm = createAsyncThunk(
 
 export const allFormList = createAsyncThunk(
     'auth/allFormList',
-    async ({id, page = 0, size = 10}, { rejectWithValue }) => {
+    async ({ id, page = 0, size = 10 }, { rejectWithValue }) => {
 
         try {
             const response = await api.get(`/form/get?workspaceid=${id}&page=${page}&size=${size}`);
-            if (response?.data?.statusCode === 200||response?.data?.statusCode === 201) {
+            if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201) {
                 return response.data;
             } else {
                 return rejectWithValue(response.data);
@@ -330,146 +331,146 @@ export const deleteFormField = createAsyncThunk(
     }
 )
 
-const initialState={
-loading:false,
-formTypeData:[],
-error:false,
-createFormData:"",
-currentForm:null,
-formsubmitData:"",
-fileuploadData:"",
-videoUploadData:"",
-allforms:[],
-editFormData:null
+const initialState = {
+    loading: false,
+    formTypeData: [],
+    error: false,
+    createFormData: "",
+    currentForm: null,
+    formsubmitData: "",
+    fileuploadData: "",
+    videoUploadData: "",
+    allforms: [],
+    editFormData: null
 }
-const FormbuilderSlice=createSlice(
+const FormbuilderSlice = createSlice(
     {
-        name:'formBuilder',
+        name: 'formBuilder',
         initialState,
-        reducers:{},
-        extraReducers:(builder)=>{
+        reducers: {},
+        extraReducers: (builder) => {
             builder
-            .addCase(formListData.pending,(state)=>{
-            state.loading=true
-        })
-        .addCase(formListData.fulfilled,(state,{payload})=>{
-            console.log("payload",payload);
-            
-            state.loading=false
-            state.formTypeData=payload?.data
-            state.error=false
+                .addCase(formListData.pending, (state) => {
+                    state.loading = true
+                })
+                .addCase(formListData.fulfilled, (state, { payload }) => {
+                    console.log("payload", payload);
 
-        })
-        .addCase(formListData.rejected,(state,{payload})=>{
-            state.loading=false
-            state.error=payload
-        })
-           .addCase(createForm.pending,(state)=>{
-            state.loading=true
-        })
-        .addCase(createForm.fulfilled,(state,{payload})=>{
-            state.loading=false
-            state.createFormData=payload
-            state.error=false
+                    state.loading = false
+                    state.formTypeData = payload?.data
+                    state.error = false
 
-        })
-        .addCase(createForm.rejected,(state,{payload})=>{
-            state.loading=false
-            state.error=payload
-        })
-            .addCase(getForm.pending,(state)=>{
-            state.loading=true
-        })
-        .addCase(getForm.fulfilled,(state,{payload})=>{
-            state.loading=false
-            state.currentForm=payload?.data
-            state.error=false
+                })
+                .addCase(formListData.rejected, (state, { payload }) => {
+                    state.loading = false
+                    state.error = payload
+                })
+                .addCase(createForm.pending, (state) => {
+                    state.loading = true
+                })
+                .addCase(createForm.fulfilled, (state, { payload }) => {
+                    state.loading = false
+                    state.createFormData = payload
+                    state.error = false
 
-        })
-        .addCase(getForm.rejected,(state,{payload})=>{
-            state.loading=false
-            state.error=payload
-        })
-            .addCase(saveForm.pending,(state)=>{
-            state.loading=true
-        })
-        .addCase(saveForm.fulfilled,(state,{payload})=>{
-            state.loading=false
-            state.formsubmitData=payload
-            state.error=false
+                })
+                .addCase(createForm.rejected, (state, { payload }) => {
+                    state.loading = false
+                    state.error = payload
+                })
+                .addCase(getForm.pending, (state) => {
+                    state.loading = true
+                })
+                .addCase(getForm.fulfilled, (state, { payload }) => {
+                    state.loading = false
+                    state.currentForm = payload?.data
+                    state.error = false
 
-        })
-        .addCase(saveForm.rejected,(state,{payload})=>{
-            state.loading=false
-            state.error=payload
-        })
-           .addCase(uploadImageForm.pending,(state)=>{
-            state.loading=true
-        })
-        .addCase(uploadImageForm.fulfilled,(state,{payload})=>{
-            state.loading=false
-            state.fileuploadData=payload
-            state.error=false
+                })
+                .addCase(getForm.rejected, (state, { payload }) => {
+                    state.loading = false
+                    state.error = payload
+                })
+                .addCase(saveForm.pending, (state) => {
+                    state.loading = true
+                })
+                .addCase(saveForm.fulfilled, (state, { payload }) => {
+                    state.loading = false
+                    state.formsubmitData = payload
+                    state.error = false
 
-        })
-        .addCase(uploadImageForm.rejected,(state,{payload})=>{
-            state.loading=false
-            state.error=payload
-        })
-                .addCase(uploadVideoForm.pending,(state)=>{
-            state.loading=true
-        })
-        .addCase(uploadVideoForm.fulfilled,(state,{payload})=>{
-            state.loading=false
-            state.videoUploadData=payload
-            state.error=false
+                })
+                .addCase(saveForm.rejected, (state, { payload }) => {
+                    state.loading = false
+                    state.error = payload
+                })
+                .addCase(uploadImageForm.pending, (state) => {
+                    state.loading = true
+                })
+                .addCase(uploadImageForm.fulfilled, (state, { payload }) => {
+                    state.loading = false
+                    state.fileuploadData = payload
+                    state.error = false
 
-        })
-        .addCase(uploadVideoForm.rejected,(state,{payload})=>{
-            state.loading=false
-            state.error=payload
-        })
-              .addCase(allFormList.pending,(state)=>{
-            state.loading=true
-        })
-        .addCase(allFormList.fulfilled,(state,{payload})=>{
-            state.loading=false
-            state.allforms=payload
-            state.error=false
+                })
+                .addCase(uploadImageForm.rejected, (state, { payload }) => {
+                    state.loading = false
+                    state.error = payload
+                })
+                .addCase(uploadVideoForm.pending, (state) => {
+                    state.loading = true
+                })
+                .addCase(uploadVideoForm.fulfilled, (state, { payload }) => {
+                    state.loading = false
+                    state.videoUploadData = payload
+                    state.error = false
 
-        })
-        .addCase(allFormList.rejected,(state,{payload})=>{
-            state.loading=false
-            state.error=payload
-        })
-        .addCase(getFormById.pending,(state)=>{
-            state.loading=true
-        })
-        .addCase(getFormById.fulfilled,(state,{payload})=>{
-            state.loading=false
-            state.editFormData=payload?.data
-            state.error=false
-        })
-        .addCase(getFormById.rejected,(state,{payload})=>{
-            state.loading=false
-            state.error=payload
-        })
-        .addCase(updateForm.pending,(state)=>{
-            state.loading=true
-        })
-        .addCase(updateForm.fulfilled,(state,{payload})=>{
-            state.loading=false
-            state.createFormData=payload
-            state.error=false
-        })
-        .addCase(updateForm.rejected,(state,{payload})=>{
-            state.loading=false
-            state.error=payload
-        })
+                })
+                .addCase(uploadVideoForm.rejected, (state, { payload }) => {
+                    state.loading = false
+                    state.error = payload
+                })
+                .addCase(allFormList.pending, (state) => {
+                    state.loading = true
+                })
+                .addCase(allFormList.fulfilled, (state, { payload }) => {
+                    state.loading = false
+                    state.allforms = payload
+                    state.error = false
+
+                })
+                .addCase(allFormList.rejected, (state, { payload }) => {
+                    state.loading = false
+                    state.error = payload
+                })
+                .addCase(getFormById.pending, (state) => {
+                    state.loading = true
+                })
+                .addCase(getFormById.fulfilled, (state, { payload }) => {
+                    state.loading = false
+                    state.editFormData = payload?.data
+                    state.error = false
+                })
+                .addCase(getFormById.rejected, (state, { payload }) => {
+                    state.loading = false
+                    state.error = payload
+                })
+                .addCase(updateForm.pending, (state) => {
+                    state.loading = true
+                })
+                .addCase(updateForm.fulfilled, (state, { payload }) => {
+                    state.loading = false
+                    state.createFormData = payload
+                    state.error = false
+                })
+                .addCase(updateForm.rejected, (state, { payload }) => {
+                    state.loading = false
+                    state.error = payload
+                })
 
 
         }
-        
+
     }
 )
 export default FormbuilderSlice.reducer;

@@ -21,7 +21,7 @@ export const sendOtp = createAsyncThunk(
     'auth/sendOtp',
     async (userInput, { rejectWithValue }) => {
         try {
-            const response = await api.post('/organization/send-otp', userInput);
+            const response = await api.post('/user/send-otp', userInput);
             if (response?.data?.statusCode === 200) {
                 return response.data;
             } else {
@@ -126,6 +126,22 @@ export const uploadAvatar = createAsyncThunk(
                     'Content-Type': 'multipart/form-data',
                 },
             });
+            if (response?.data?.statusCode === 200 || response?.status === 200) {
+                return response.data;
+            } else {
+                return rejectWithValue(response.data);
+            }
+        } catch (err) {
+            return rejectWithValue(err?.response?.data || err);
+        }
+    }
+)
+
+export const forgetPassword = createAsyncThunk(
+    'auth/forgetPassword',
+    async (userInput, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/organization/forgetpassword', userInput);
             if (response?.data?.statusCode === 200 || response?.status === 200) {
                 return response.data;
             } else {
