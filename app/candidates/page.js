@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-    Search, Plus, MoreVertical, Pencil, Trash2, X, Loader2, User, GripVertical, Eye
+    Search, Plus, MoreVertical, Pencil, Trash2, X, Loader2, User, GripVertical, Eye, AlertTriangle, Check
 } from 'lucide-react';
 import { getCandidateByWorkspace } from '../Reducer/CandidateSlice';
 import { workspaceList } from '../Reducer/WorkspaceSlice';
@@ -55,18 +55,97 @@ function formatDate(dateStr) {
     return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// ─── Custom Checkbox ───────────────────────────────────────────────────────────
+function CustomCheckbox({ checked, indeterminate, onChange, className = '' }) {
+    return (
+        <div 
+            onClick={(e) => { e.stopPropagation(); onChange(!checked); }}
+            className={`flex items-center justify-center w-5 h-5 rounded-[6px] border cursor-pointer transition-all duration-200 ${
+                checked || indeterminate 
+                    ? 'bg-[#8624F0] border-[#8624F0] text-white shadow-sm' 
+                    : 'bg-white border-gray-300 hover:border-[#8624F0]/50'
+            } ${className}`}
+        >
+            {checked && !indeterminate && <Check className="w-3.5 h-3.5" strokeWidth={3.5} />}
+            {indeterminate && <div className="w-2.5 h-[3px] bg-white rounded-full" />}
+        </div>
+    );
+}
+
+// ─── Custom Dropdown ───────────────────────────────────────────────────────────
+function CustomDropdown({ value, onChange, options, placeholder = "Select option..." }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        function handleOut(e) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false);
+        }
+        document.addEventListener('mousedown', handleOut);
+        return () => document.removeEventListener('mousedown', handleOut);
+    }, []);
+
+    const selectedOption = options.find(o => String(o.value) === String(value));
+
+    return (
+        <div className="relative w-full" ref={dropdownRef}>
+            <div 
+                onClick={() => setIsOpen(!isOpen)}
+                className={`w-full px-4 py-3.5 border rounded-[12px] text-sm focus:outline-none cursor-pointer transition-colors flex items-center justify-between shadow-sm ${isOpen ? 'border-[#8624F0] ring-2 ring-[#8624F0]/30 bg-white' : 'border-gray-200 bg-gray-50/50 hover:border-gray-300'}`}
+            >
+                <span className={selectedOption ? 'text-gray-900 font-medium' : 'text-gray-400'}>
+                    {selectedOption ? selectedOption.label : placeholder}
+                </span>
+                <div className={`text-gray-400 bg-white border border-gray-100 shadow-sm rounded-full p-0.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+            </div>
+            
+            {isOpen && (
+                <div className="w-full mt-2 bg-[#FBF9FF] border border-[#E9D5FF] rounded-[12px] shadow-sm py-1.5 overflow-hidden transition-all">
+                    {options.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">No options available</div>
+                    ) : (
+                        <div className="max-h-60 overflow-y-auto">
+                            {options.map((opt) => (
+                                <div 
+                                    key={opt.value}
+                                    onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                                    className={`px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between ${String(value) === String(opt.value) ? 'bg-[#8624F0]/10 text-[#8624F0] font-medium' : 'text-gray-700 hover:bg-[#8624F0]/5 hover:text-[#8624F0]'}`}
+                                >
+                                    {opt.label}
+                                    {String(value) === String(opt.value) && <Check className="w-4 h-4 text-[#8624F0]" strokeWidth={3} />}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── Candidate Card ────────────────────────────────────────────────────────────
-function CandidateCard({ candidate, onDragStart, onCardClick }) {
+function CandidateCard({ candidate, onDragStart, onCardClick, isSelected, onToggleSelect }) {
     const avatarColor = getAvatarColor(candidate.fullName);
     return (
         <div
             draggable
             onDragStart={(e) => onDragStart(e, candidate)}
-            onClick={() => onCardClick(candidate)}
-            className="bg-white rounded-[12px] p-4 mb-3 shadow-sm border border-gray-100 cursor-grab active:cursor-grabbing hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+            onClick={(e) => {
+                // If they didn't click the checkbox specifically, open candidate details
+                onCardClick(candidate);
+            }}
+            className={`bg-white rounded-[12px] p-4 mb-3 shadow-sm border ${isSelected ? 'border-[#8624F0] ring-1 ring-[#8624F0]/30' : 'border-gray-100'} cursor-grab active:cursor-grabbing hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group relative`}
             style={{ borderLeft: `3px solid ${avatarColor}` }}
         >
-            <div className="flex items-start gap-3">
+            <div className="absolute right-3 top-3">
+                <CustomCheckbox 
+                    checked={isSelected || false}
+                    onChange={() => onToggleSelect(candidate.submissionId)}
+                />
+            </div>
+            <div className="flex items-start gap-3 pr-6">
                 <div
                     className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                     style={{ background: avatarColor }}
@@ -77,7 +156,6 @@ function CandidateCard({ candidate, onDragStart, onCardClick }) {
                     <p className="font-semibold text-gray-800 text-sm truncate">{candidate.fullName || 'Unknown'}</p>
                     <p className="text-gray-500 text-xs truncate mt-0.5">{candidate.email}</p>
                 </div>
-                <GripVertical className="w-4 h-4 text-gray-300 group-hover:text-gray-400 flex-shrink-0 mt-0.5" />
             </div>
             <div className="mt-3 flex items-center justify-between gap-2">
                 <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full truncate max-w-[140px]">
@@ -92,7 +170,7 @@ function CandidateCard({ candidate, onDragStart, onCardClick }) {
 }
 
 // ─── Stage Column ──────────────────────────────────────────────────────────────
-function StageColumn({ stage, candidates, color, isApplied, onDrop, onDragOver, onDragLeave, onDragStart, onEditStage, onDeleteStage, onCardClick, isDragOver }) {
+function StageColumn({ stage, candidates, color, isApplied, onDrop, onDragOver, onDragLeave, onDragStart, onEditStage, onDeleteStage, onCardClick, isDragOver, selectedCandidates = [], onToggleSelect, onSelectAll, onInitiateBulkMove }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef(null);
 
@@ -103,6 +181,11 @@ function StageColumn({ stage, candidates, color, isApplied, onDrop, onDragOver, 
         document.addEventListener('mousedown', handleOut);
         return () => document.removeEventListener('mousedown', handleOut);
     }, []);
+
+    const stageCandidateIds = candidates.map(c => c.submissionId);
+    const selectedInStage = stageCandidateIds.filter(id => selectedCandidates.includes(id));
+    const isAllSelected = stageCandidateIds.length > 0 && selectedInStage.length === stageCandidateIds.length;
+    const isIndeterminate = selectedInStage.length > 0 && selectedInStage.length < stageCandidateIds.length;
 
     return (
         <div
@@ -117,7 +200,7 @@ function StageColumn({ stage, candidates, color, isApplied, onDrop, onDragOver, 
             onDragLeave={onDragLeave}
         >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 pt-4 pb-3">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2">
                 <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color.dot }} />
                     <span className="font-bold text-sm" style={{ color: color.dot }}>{stage.name}</span>
@@ -156,6 +239,33 @@ function StageColumn({ stage, candidates, color, isApplied, onDrop, onDragOver, 
                 )}
             </div>
 
+            {/* Bulk Action Bar */}
+            {candidates.length > 0 && (
+                <div className="px-4 pb-3 flex items-center justify-between">
+                    <div 
+                        className="flex items-center gap-2 cursor-pointer group"
+                        onClick={() => onSelectAll(stage.id, stageCandidateIds, !isAllSelected)}
+                    >
+                        <CustomCheckbox
+                            checked={isAllSelected}
+                            indeterminate={isIndeterminate}
+                            onChange={(checked) => onSelectAll(stage.id, stageCandidateIds, checked)}
+                        />
+                        <span className="text-xs font-medium text-gray-500 group-hover:text-gray-700 transition-colors">
+                            Select All
+                        </span>
+                    </div>
+                    {selectedInStage.length > 0 && (
+                        <button
+                            onClick={() => onInitiateBulkMove(stage.id)}
+                            className="text-xs font-semibold text-white bg-[#8624F0] hover:bg-[#6c1dc0] px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 shadow-sm cursor-pointer"
+                        >
+                            Move ({selectedInStage.length})
+                        </button>
+                    )}
+                </div>
+            )}
+
             {/* Cards area */}
             <div className="flex-1 px-3 pb-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
                 {candidates.length === 0 ? (
@@ -167,7 +277,14 @@ function StageColumn({ stage, candidates, color, isApplied, onDrop, onDragOver, 
                     </div>
                 ) : (
                     candidates.map(c => (
-                        <CandidateCard key={c.submissionId} candidate={c} onDragStart={onDragStart} onCardClick={onCardClick} />
+                        <CandidateCard 
+                            key={c.submissionId} 
+                            candidate={c} 
+                            onDragStart={onDragStart} 
+                            onCardClick={onCardClick}
+                            isSelected={selectedCandidates.includes(c.submissionId)}
+                            onToggleSelect={onToggleSelect}
+                        />
                     ))
                 )}
             </div>
@@ -218,6 +335,12 @@ export default function Candidates() {
     const [editStage, setEditStage] = useState(null);
     const [editStageName, setEditStageName] = useState('');
     const [deleteStageTarget, setDeleteStageTarget] = useState(null);
+    
+    // Bulk Move states
+    const [selectedCandidates, setSelectedCandidates] = useState([]);
+    const [bulkMoveSourceStage, setBulkMoveSourceStage] = useState(null);
+    const [showBulkMoveModal, setShowBulkMoveModal] = useState(false);
+    const [bulkMoveTargetStage, setBulkMoveTargetStage] = useState('');
 
     // Load workspaces on mount
     useEffect(() => { dispatch(workspaceList()); }, [dispatch]);
@@ -379,6 +502,68 @@ export default function Candidates() {
             .catch(err => toast.error(err?.message || 'Failed to delete stage'));
     };
 
+    // ── Bulk Move Handlers ──
+    const handleToggleSelect = (submissionId) => {
+        setSelectedCandidates(prev => 
+            prev.includes(submissionId) 
+                ? prev.filter(id => id !== submissionId)
+                : [...prev, submissionId]
+        );
+    };
+
+    const handleSelectAllInStage = (stageId, candidateIds, isChecked) => {
+        if (isChecked) {
+            setSelectedCandidates(prev => Array.from(new Set([...prev, ...candidateIds])));
+        } else {
+            setSelectedCandidates(prev => prev.filter(id => !candidateIds.includes(id)));
+        }
+    };
+
+    const handleInitiateBulkMove = (stageId) => {
+        setBulkMoveSourceStage(stageId);
+        setBulkMoveTargetStage('');
+        setShowBulkMoveModal(true);
+    };
+
+    const handleBulkMoveSubmit = () => {
+        if (!bulkMoveTargetStage) {
+            toast.error("Please select a target stage.");
+            return;
+        }
+
+        const sourceCandidateIds = bulkMoveSourceStage === 'applied' 
+            ? applied.map(c => c.submissionId) 
+            : (stageGroups[bulkMoveSourceStage] || []).map(c => c.submissionId);
+        
+        const candidatesToMove = selectedCandidates.filter(id => sourceCandidateIds.includes(id));
+        
+        if (candidatesToMove.length === 0) {
+            toast.error("No selected candidates found in this stage.");
+            return;
+        }
+
+        const targetStageId = bulkMoveTargetStage === 'applied' ? null : Number(bulkMoveTargetStage);
+        
+        // Optimistic update
+        candidatesToMove.forEach(submissionId => {
+            dispatch(setLocalStage({ submissionId, stageId: targetStageId }));
+        });
+
+        const promises = candidatesToMove.map(submissionId => 
+            dispatch(updateCandidateStage({ submissionId, stageId: targetStageId })).unwrap()
+        );
+
+        toast.promise(Promise.all(promises), {
+            pending: `Moving ${candidatesToMove.length} candidates...`,
+            success: 'Successfully moved candidates!',
+            error: 'Failed to move some candidates.'
+        });
+
+        setSelectedCandidates(prev => prev.filter(id => !candidatesToMove.includes(id)));
+        setShowBulkMoveModal(false);
+    };
+
+
     const workspaceName = workspaceData?.data?.find(w => w.id == selectedWorkspace)?.name || '';
 
     return (
@@ -474,6 +659,10 @@ export default function Candidates() {
                                 onDeleteStage={() => {}}
                                 onCardClick={setSelectedCandidate}
                                 isDragOver={dragOverStage === 'applied'}
+                                selectedCandidates={selectedCandidates}
+                                onToggleSelect={handleToggleSelect}
+                                onSelectAll={handleSelectAllInStage}
+                                onInitiateBulkMove={handleInitiateBulkMove}
                             />
                         )}
 
@@ -495,6 +684,10 @@ export default function Candidates() {
                                     onDeleteStage={setDeleteStageTarget}
                                     onCardClick={setSelectedCandidate}
                                     isDragOver={dragOverStage === stage.id}
+                                    selectedCandidates={selectedCandidates}
+                                    onToggleSelect={handleToggleSelect}
+                                    onSelectAll={handleSelectAllInStage}
+                                    onInitiateBulkMove={handleInitiateBulkMove}
                                 />
                             );
                         })}
@@ -525,14 +718,14 @@ export default function Candidates() {
             {/* ── Add Stage Modal ── */}
             {showAddStage && (
                 <Modal title="Create New Stage" onClose={() => setShowAddStage(false)}>
-                    <p className="text-sm text-gray-500 mb-4">Give your stage a clear name like "Phone Screen", "Interview", or "Offer".</p>
+                    <p className="text-sm text-gray-500 mb-4">Give your stage a clear name like "Applied", "Interview", "Hired", or "Rejected".</p>
                     <input
                         autoFocus
                         type="text"
                         value={newStageName}
                         onChange={e => setNewStageName(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddStage()}
-                        placeholder="e.g. Phone Screen"
+                        placeholder="e.g. Interview"
                         className="w-full border rounded-[10px] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8624F0]/30 mb-4"
                         style={{ borderColor: '#E5E7EB' }}
                     />
@@ -541,13 +734,60 @@ export default function Candidates() {
                         <button
                             onClick={handleAddStage}
                             disabled={stageLoading || !newStageName.trim()}
-                            className="px-5 py-2 bg-[#8624F0] text-white text-sm font-semibold rounded-[8px] hover:bg-[#6c1dc0] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                            className="px-4 py-2 bg-[#8624F0] text-white text-sm font-semibold rounded-[8px] hover:bg-[#6c1dc0] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
                         >
                             {stageLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Create Stage
                         </button>
                     </div>
                 </Modal>
             )}
+
+            {/* ── Bulk Move Candidates Modal ── */}
+            {showBulkMoveModal && (
+                <Modal title="Move Selected Candidates" onClose={() => setShowBulkMoveModal(false)}>
+                    <p className="text-sm text-gray-600 mb-4">
+                        You are about to move <strong>
+                            {selectedCandidates.filter(id => {
+                                const sourceCandidateIds = bulkMoveSourceStage === 'applied' 
+                                    ? applied.map(c => c.submissionId) 
+                                    : (stageGroups[bulkMoveSourceStage] || []).map(c => c.submissionId);
+                                return sourceCandidateIds.includes(id);
+                            }).length}
+                        </strong> candidate(s). Where would you like to move them?
+                    </p>
+                    <div className="mb-6">
+                        <label className="block text-sm font-semibold text-gray-800 mb-2">Target Stage</label>
+                        <CustomDropdown
+                            value={bulkMoveTargetStage}
+                            onChange={(val) => setBulkMoveTargetStage(val)}
+                            options={(() => {
+                                const moveOptions = [];
+                                if (!apiAppliedStage && bulkMoveSourceStage !== 'applied') {
+                                    moveOptions.push({ value: 'applied', label: 'Applied' });
+                                }
+                                stages.forEach(stage => {
+                                    if (stage.id !== bulkMoveSourceStage) {
+                                        moveOptions.push({ value: String(stage.id), label: stage.name });
+                                    }
+                                });
+                                return moveOptions;
+                            })()}
+                            placeholder="Select destination stage..."
+                        />
+                    </div>
+                    <div className="flex justify-end gap-3">
+                        <button onClick={() => setShowBulkMoveModal(false)} className="px-5 py-2 text-sm rounded-[8px] border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer">Cancel</button>
+                        <button
+                            onClick={handleBulkMoveSubmit}
+                            disabled={stageLoading || !bulkMoveTargetStage}
+                            className="px-5 py-2 bg-[#8624F0] text-white text-sm font-semibold rounded-[8px] hover:bg-[#6c1dc0] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {stageLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Move Candidates
+                        </button>
+                    </div>
+                </Modal>
+            )}
+
 
             {/* ── Edit Stage Modal ── */}
             {editStage && (
@@ -576,29 +816,51 @@ export default function Candidates() {
             )}
 
             {/* ── Delete Stage Confirm Modal ── */}
-            {deleteStageTarget && (
-                <Modal title="Delete Stage?" onClose={() => setDeleteStageTarget(null)}>
-                    <div className="text-center mb-6">
-                        <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                            <Trash2 className="w-7 h-7 text-red-500" />
+            {deleteStageTarget && (() => {
+                const targetCandidatesCount = allCandidates.filter(c => c.currentStageId === deleteStageTarget.id).length;
+                const hasCandidates = targetCandidatesCount > 0;
+                
+                return (
+                    <Modal title={hasCandidates ? "Cannot Delete Stage" : "Delete Stage?"} onClose={() => setDeleteStageTarget(null)}>
+                        <div className="text-center mb-6">
+                            <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 ${hasCandidates ? 'bg-orange-100' : 'bg-red-100'}`}>
+                                {hasCandidates ? (
+                                    <AlertTriangle className="w-7 h-7 text-orange-500" />
+                                ) : (
+                                    <Trash2 className="w-7 h-7 text-red-500" />
+                                )}
+                            </div>
+                            
+                            {hasCandidates ? (
+                                <p className="text-sm text-gray-500">
+                                    <strong className="text-gray-800">"{deleteStageTarget.name}"</strong> stage currently contains <strong className="text-orange-600">{targetCandidatesCount}</strong> candidate(s).<br/><br/>
+                                    You cannot delete a stage that has candidates. Please move all candidates to another stage first before deleting.
+                                </p>
+                            ) : (
+                                <p className="text-sm text-gray-500">
+                                    Are you sure you want to delete <strong className="text-gray-800">"{deleteStageTarget.name}"</strong>?
+                                    This action cannot be undone.
+                                </p>
+                            )}
                         </div>
-                        <p className="text-sm text-gray-500">
-                            Are you sure you want to delete <strong className="text-gray-800">"{deleteStageTarget.name}"</strong>?
-                            Candidates in this stage will be moved back to <strong>Applied</strong>.
-                        </p>
-                    </div>
-                    <div className="flex justify-center gap-3">
-                        <button onClick={() => setDeleteStageTarget(null)} className="px-5 py-2 text-sm rounded-[8px] border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer">Cancel</button>
-                        <button
-                            onClick={handleDeleteStage}
-                            disabled={stageLoading}
-                            className="px-5 py-2 bg-red-500 text-white text-sm font-semibold rounded-[8px] hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
-                        >
-                            {stageLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Delete Stage
-                        </button>
-                    </div>
-                </Modal>
-            )}
+                        <div className="flex justify-center gap-3">
+                            <button onClick={() => setDeleteStageTarget(null)} className="px-5 py-2 text-sm rounded-[8px] border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer">
+                                {hasCandidates ? "Okay, got it" : "Cancel"}
+                            </button>
+                            
+                            {!hasCandidates && (
+                                <button
+                                    onClick={handleDeleteStage}
+                                    disabled={stageLoading}
+                                    className="px-5 py-2 bg-red-500 text-white text-sm font-semibold rounded-[8px] hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {stageLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Delete Stage
+                                </button>
+                            )}
+                        </div>
+                    </Modal>
+                );
+            })()}
 
             {/* ── Candidate Side Drawer (matching screenshot) ── */}
             {selectedCandidate && (
