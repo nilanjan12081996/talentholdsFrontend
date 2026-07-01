@@ -200,7 +200,7 @@ export default function Candidates() {
     // Redux state
     const { workspaceData } = useSelector((state) => state?.workspace || {});
     const { candidate, loading: candidateLoading } = useSelector((state) => state?.candidate || {});
-    const { stages, stageLoading, localStageMap } = useSelector((state) => state?.kanban || {});
+    const { stages, stageLoading, localStageMap, localStageUpdateTimes } = useSelector((state) => state?.kanban || {});
 
     // Local UI state
     const [selectedWorkspace, setSelectedWorkspace] = useState(null);
@@ -256,7 +256,7 @@ export default function Candidates() {
                     ? localStageMap[sub.submissionId]
                     : (sub.id in localStageMap)
                         ? localStageMap[sub.id]
-                        : (sub.stageMap?.workspaceStageId ?? null);
+                        : (sub.currentStageId ?? sub.stageMap?.workspaceStageId ?? null);
                 allCandidates.push({
                     id: sub.candidate.id,
                     submissionId: sub.id,
@@ -287,9 +287,29 @@ export default function Candidates() {
     });
 
     // Group by stage
-    const applied = filteredCandidates.filter(c => !c.currentStageId);
+    const apiAppliedStage = stages.find(s => s.name?.toLowerCase() === 'applied');
+    const normalizedCandidates = filteredCandidates.map(c => {
+        if (!c.currentStageId && apiAppliedStage) {
+            return { ...c, currentStageId: apiAppliedStage.id };
+        }
+        return c;
+    });
+
+    const sortCandidates = (cands) => {
+        return cands.sort((a, b) => {
+            const timeA = localStageUpdateTimes?.[a.submissionId] || 0;
+            const timeB = localStageUpdateTimes?.[b.submissionId] || 0;
+            if (timeA !== timeB) return timeB - timeA;
+            // Fallback to ID descending
+            return b.id - a.id;
+        });
+    };
+
+    const applied = sortCandidates(normalizedCandidates.filter(c => !c.currentStageId));
     const stageGroups = {};
-    stages.forEach(s => { stageGroups[s.id] = filteredCandidates.filter(c => c.currentStageId === s.id); });
+    stages.forEach(s => { 
+        stageGroups[s.id] = sortCandidates(normalizedCandidates.filter(c => c.currentStageId === s.id)); 
+    });
 
     // ─── Drag & Drop ─────────────────────────────────────────────────────────────
     const handleDragStart = (e, candidate) => {
@@ -439,40 +459,45 @@ export default function Candidates() {
                 <div className="flex-1 overflow-x-auto pb-2">
                     <div className="flex gap-4 h-full" style={{ minWidth: 'max-content' }}>
 
-                        {/* Applied column */}
-                        <StageColumn
-                            stage={{ id: null, name: 'Applied' }}
-                            candidates={applied}
-                            color={APPLIED_COLOR}
-                            isApplied={true}
-                            onDrop={(e) => handleDrop(e, null)}
-                            onDragOver={(e) => handleDragOver(e, 'applied')}
-                            onDragLeave={handleDragLeave}
-                            onDragStart={handleDragStart}
-                            onEditStage={() => {}}
-                            onDeleteStage={() => {}}
-                            onCardClick={setSelectedCandidate}
-                            isDragOver={dragOverStage === 'applied'}
-                        />
-
-                        {/* Custom stages */}
-                        {stages.map((stage, idx) => (
+                        {/* Legacy Applied column (only show if API didn't provide one) */}
+                        {!apiAppliedStage && (
                             <StageColumn
-                                key={stage.id}
-                                stage={stage}
-                                candidates={stageGroups[stage.id] || []}
-                                color={STAGE_COLORS[idx % STAGE_COLORS.length]}
-                                isApplied={false}
-                                onDrop={(e) => handleDrop(e, stage.id)}
-                                onDragOver={(e) => handleDragOver(e, stage.id)}
+                                stage={{ id: null, name: 'Applied' }}
+                                candidates={applied}
+                                color={APPLIED_COLOR}
+                                isApplied={true}
+                                onDrop={(e) => handleDrop(e, null)}
+                                onDragOver={(e) => handleDragOver(e, 'applied')}
                                 onDragLeave={handleDragLeave}
                                 onDragStart={handleDragStart}
-                                onEditStage={(s) => { setEditStage(s); setEditStageName(s.name); }}
-                                onDeleteStage={setDeleteStageTarget}
+                                onEditStage={() => {}}
+                                onDeleteStage={() => {}}
                                 onCardClick={setSelectedCandidate}
-                                isDragOver={dragOverStage === stage.id}
+                                isDragOver={dragOverStage === 'applied'}
                             />
-                        ))}
+                        )}
+
+                        {/* Custom stages (including backend's Applied stage) */}
+                        {stages.map((stage, idx) => {
+                            const isApiApplied = stage.name?.toLowerCase() === 'applied';
+                            return (
+                                <StageColumn
+                                    key={stage.id}
+                                    stage={stage}
+                                    candidates={stageGroups[stage.id] || []}
+                                    color={isApiApplied ? APPLIED_COLOR : STAGE_COLORS[idx % STAGE_COLORS.length]}
+                                    isApplied={isApiApplied}
+                                    onDrop={(e) => handleDrop(e, stage.id)}
+                                    onDragOver={(e) => handleDragOver(e, stage.id)}
+                                    onDragLeave={handleDragLeave}
+                                    onDragStart={handleDragStart}
+                                    onEditStage={(s) => { setEditStage(s); setEditStageName(s.name); }}
+                                    onDeleteStage={setDeleteStageTarget}
+                                    onCardClick={setSelectedCandidate}
+                                    isDragOver={dragOverStage === stage.id}
+                                />
+                            );
+                        })}
 
                         {/* Add Stage button column */}
                         <div
@@ -665,7 +690,7 @@ export default function Candidates() {
                                                         {field?.label || `Field ${i + 1}`}
                                                     </label>
                                                     <div className="w-full bg-[#FCF9FF] border border-[#F3EAFF] rounded-[8px] px-4 py-2.5 text-[14px] text-gray-800 font-medium break-words">
-                                                        {ans.answer || '—'}
+                                                        {ans.textValue || ans.numberValue || ans.dateValue || ans.imageUrl || ans.videoUrl || ans.answer || '—'}
                                                     </div>
                                                 </div>
                                             );

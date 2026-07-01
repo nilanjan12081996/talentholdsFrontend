@@ -3,7 +3,7 @@
 import {
   Type, AlignLeft, Hash, Circle, CheckSquare,
   ChevronDown, Mail, Phone, Calendar, Upload,
-  Star, Minus, Heading1, FileText, Video, List
+  Star, Minus, Heading1, FileText, Video, List, Link2
 } from "lucide-react";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -98,6 +98,28 @@ export default function FieldBlocks({ onAddField }) {
                 </button>
               );
             })
+          )}
+          
+          {/* Custom Link / URL Pseudo-type */}
+          {!loading && (
+              <button
+                key="custom-link-field"
+                onClick={() => onAddField("link")} 
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all cursor-pointer text-left group hover:bg-[#8624F0]/5 mt-2 border-t pt-3 border-gray-100 dark:border-gray-800"
+              >
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors group-hover:bg-[#8624F0]/10"
+                  style={{ background: 'var(--bg-main)' }}
+                >
+                  <Link2 
+                    className="w-4 h-4 group-hover:text-[#8624F0] transition-colors" 
+                    style={{ color: 'var(--text-secondary)' }} 
+                  />
+                </div>
+                <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  Link / URL
+                </span>
+              </button>
           )}
         </div>
       </div>

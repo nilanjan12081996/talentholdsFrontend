@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
     ArrowLeft, Eye, Settings as SettingsIcon, Sliders,
-    Share2, GripVertical, Trash2, Plus, Loader2, Pencil
+    Share2, GripVertical, Trash2, Plus, Loader2, Pencil,
+    Link2, Facebook, Twitter, Instagram, Linkedin
 } from "lucide-react";
 import FieldBlocks from "../../ui/form-builder/FieldBlocks"
 import FieldSettings from "../../ui/form-builder/FieldSettings";
@@ -151,19 +152,28 @@ export default function FormBuilderPage() {
         if (Array.isArray(editFormData.fields) && editFormData.fields.length > 0) {
             const mappedFields = editFormData.fields.map((f, idx) => {
                 // Try to derive the UI type from the field type code
-                const uiType = apiCodeToUiType[f.formFieldType?.code || f.fieldType?.code] || "short-text";
+                let uiType = apiCodeToUiType[f.formFieldType?.code || f.fieldType?.code] || "short-text";
                 const isDefault = f.label === "Full Name" || f.label === "Email Address";
+                
+                let options = Array.isArray(f.options) ? f.options.map((o) => o.optionLabel ?? o) : undefined;
+                let platform = "facebook";
+                
+                if (uiType === "short-text" && options?.length > 0 && typeof options[0] === 'string' && options[0].startsWith("PLATFORM:")) {
+                    uiType = "link";
+                    platform = options[0].replace("PLATFORM:", "");
+                    options = undefined;
+                }
+
                 return {
                     id: f.id ? `field-api-${f.id}` : `field-idx-${idx}`,
                     _apiId: f.id,           // keep original DB id for update payload
                     type: uiType,
+                    platform: platform,
                     label: f.label || "",
                     placeholder: f.placeholder || "",
                     required: f.isRequired ?? false,
                     description: f.description || "",
-                    options: Array.isArray(f.options)
-                        ? f.options.map((o) => o.optionLabel ?? o)
-                        : undefined,
+                    options: options,
                     isDeletable: !isDefault,
                 };
             });
@@ -189,6 +199,7 @@ export default function FormBuilderPage() {
             "video": "Video Upload",
             "rating": "Rating", "heading": "Heading",
             "paragraph": "Paragraph", "divider": "Divider",
+            "link": "Link / URL",
         };
         return labels[type] || "New Field";
     };
@@ -275,7 +286,8 @@ export default function FormBuilderPage() {
             "date": "DATE",
             "file-upload": "FILE",
             "multi-select": "MULTI_SELECT",
-            "video": "VIDEO"
+            "video": "VIDEO",
+            "link": "SHORT_TEXT"
         };
 
         const fallbackIds = {
@@ -315,7 +327,11 @@ export default function FormBuilderPage() {
             }
 
             // 5. If it has options, format them to match API
-            if (field.options && field.options.length > 0) {
+            if (field.type === "link") {
+                payloadField.options = [{
+                    optionLabel: `PLATFORM:${field.platform || "facebook"}`
+                }];
+            } else if (field.options && field.options.length > 0) {
                 payloadField.options = field.options.map(opt => ({
                     optionLabel: opt
                 }));
@@ -725,6 +741,20 @@ function FieldPreview({ field }) {
         case "phone":
         case "number":
             return <input disabled placeholder={field.placeholder || "Your answer"} className={inputClass} style={inputStyle} />;
+        case "link":
+            let LinkIcon = Link2;
+            if (field.platform === "facebook") LinkIcon = Facebook;
+            if (field.platform === "twitter") LinkIcon = Twitter;
+            if (field.platform === "instagram") LinkIcon = Instagram;
+            if (field.platform === "linkedin") LinkIcon = Linkedin;
+            return (
+                <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-secondary)' }}>
+                        <LinkIcon className="w-4 h-4" />
+                    </div>
+                    <input disabled placeholder={field.placeholder || "https://..."} className={`${inputClass} pl-10`} style={inputStyle} />
+                </div>
+            );
         case "long-text":
             return <textarea disabled placeholder={field.placeholder || "Your answer"} rows={3} className="w-full px-3 py-2 rounded-[8px] text-sm cursor-not-allowed resize-none" style={inputStyle} />;
         case "multiple-choice":

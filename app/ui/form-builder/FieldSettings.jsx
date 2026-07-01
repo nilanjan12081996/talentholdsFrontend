@@ -71,7 +71,7 @@ export default function FieldSettings({ field, onUpdate, onClose }) {
           */}
 
           {/* Placeholder */}
-          {["short-text", "long-text", "email", "phone", "number"].includes(field.type) && (
+          {["short-text", "long-text", "email", "phone", "number", "link"].includes(field.type) && (
             <div className="space-y-2">
               <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Placeholder</label>
               <input
@@ -81,6 +81,25 @@ export default function FieldSettings({ field, onUpdate, onClose }) {
                 className="w-full h-[42px] px-3 rounded-[8px] outline-none focus:ring-2 focus:ring-[#8624F0]/30 text-sm"
                 style={inputStyle}
               />
+            </div>
+          )}
+
+          {/* Platform Selector for Link Field */}
+          {field.type === "link" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Platform</label>
+              <select
+                value={field.platform || "facebook"}
+                onChange={(e) => onUpdate({ platform: e.target.value })}
+                className="w-full h-[42px] px-3 rounded-[8px] outline-none focus:ring-2 focus:ring-[#8624F0]/30 text-sm"
+                style={inputStyle}
+              >
+                <option value="facebook">Facebook</option>
+                <option value="twitter">Twitter</option>
+                <option value="instagram">Instagram</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="other">Other Link</option>
+              </select>
             </div>
           )}
 

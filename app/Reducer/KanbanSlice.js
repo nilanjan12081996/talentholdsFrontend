@@ -94,6 +94,7 @@ const initialState = {
     error: null,
     stages: [],              // workspace stages list
     localStageMap: {},       // submissionId -> stageId (for optimistic updates)
+    localStageUpdateTimes: {}, // submissionId -> timestamp
 };
 
 const KanbanSlice = createSlice({
@@ -104,11 +105,13 @@ const KanbanSlice = createSlice({
         setLocalStage: (state, { payload }) => {
             // payload: { submissionId, stageId }
             state.localStageMap[payload.submissionId] = payload.stageId;
+            state.localStageUpdateTimes[payload.submissionId] = Date.now();
         },
         // Rollback optimistic update on error
         rollbackLocalStage: (state, { payload }) => {
             // payload: { submissionId, prevStageId }
             state.localStageMap[payload.submissionId] = payload.prevStageId;
+            delete state.localStageUpdateTimes[payload.submissionId];
         },
         clearKanbanError: (state) => {
             state.error = null;
@@ -116,6 +119,7 @@ const KanbanSlice = createSlice({
         clearStages: (state) => {
             state.stages = [];
             state.localStageMap = {};
+            state.localStageUpdateTimes = {};
         },
     },
     extraReducers: (builder) => {
